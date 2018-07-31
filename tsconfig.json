@@ -6,6 +6,6 @@
     "moduleResolution": "node",
     "lib": ["es2018"],
     "types": ["node"],
-    "outDir": "out/"
+    "outDir": "src/out/"
   }
 }

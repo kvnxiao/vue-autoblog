@@ -5,8 +5,8 @@
     "typographer": true
   },
   "directory": {
-    "inputFolder": "test/blog/",
-    "outputFolder": "test/autoblog-out/"
+    "inputFolder": "blog/",
+    "outputFolder": "autoblog-out/"
   },
   "style": {
     "classNames": "blog"
