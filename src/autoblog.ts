@@ -7,9 +7,9 @@ import template from "./template"
 const inputType = ".md"
 const inputTypeExt = "md"
 
-interface MarkdownEntry {
-  fileInfo: FileInfo,
-  markdown: MarkdownFile,
+export interface MarkdownEntry {
+  fileInfo: FileInfo
+  markdown: MarkdownFile
 }
 
 function generate() {
@@ -67,9 +67,7 @@ function generate() {
 
 function generateVue(entry: MarkdownEntry) {
   const html = entry.markdown.parseToHTML()
-  const output = config.style
-    ? template.vue.generate(html, entry.fileInfo.name, config.style.classNames)
-    : template.vue.generate(html, entry.fileInfo.name)
+  const output = config.style ? template.vue.generate(entry) : template.vue.generate(entry)
   fs.writeFileSync(entry.fileInfo.fullPath, output, { encoding: "utf8" })
 }
 

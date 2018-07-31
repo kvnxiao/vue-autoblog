@@ -3,3 +3,9 @@
     %s
   </div>
 </template>
+
+<script>
+export default {
+  metaInfo: %s
+}
+</script>

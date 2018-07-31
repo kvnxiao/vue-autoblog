@@ -16,6 +16,10 @@ interface StyleOptions {
   classNames: string
 }
 
+interface VueOptions {
+  outputMeta: boolean
+}
+
 interface IConfig {
   // markdown-it options
   markdownit: markdownit.Options
@@ -28,6 +32,9 @@ interface IConfig {
 
   // output type
   outputType: string
+
+  // vue options
+  vue?: VueOptions
 }
 
 class Config implements IConfig {
@@ -39,6 +46,7 @@ class Config implements IConfig {
   public readonly directory: DirectoryOptions
   public readonly style?: StyleOptions
   public readonly outputType: string
+  public readonly vue?: VueOptions
 
   private constructor() {
     const configJson = fs.readFileSync(".autoblog.json", "utf8")
@@ -48,8 +56,9 @@ class Config implements IConfig {
     this.markdownit = configContent.markdownit
     this.outputType = configContent.outputType
     this.style = configContent.style
+    this.vue = configContent.vue
 
-    if (!(this.validate())) {
+    if (!this.validate()) {
       throw new Error("failed to validate config.")
     }
   }
@@ -63,9 +72,11 @@ class Config implements IConfig {
     // validate input dir exists
     const inputExists = fs.existsSync(this.directory.inputFolder)
     if (!inputExists) {
-      console.error(`Failed to read input folder "${
-        this.directory.inputFolder
-      }". Make sure this directory exists!`)
+      console.error(
+        `Failed to read input folder "${
+          this.directory.inputFolder
+        }". Make sure this directory exists!`,
+      )
       return false
     }
     return true

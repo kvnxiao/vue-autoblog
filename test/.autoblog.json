@@ -11,5 +11,8 @@
   "style": {
     "classNames": "blog"
   },
-  "outputType": "vue"
+  "outputType": "vue",
+  "vue": {
+    "outputMeta": true
+  }
 }
