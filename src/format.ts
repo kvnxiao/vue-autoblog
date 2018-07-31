@@ -1,6 +1,8 @@
 import { html_beautify } from "js-beautify"
+import * as prettier from "prettier"
+import config from "./config"
 
-const beautifyConfig: HTMLBeautifyOptions = {
+const beautifyConfigHTML: HTMLBeautifyOptions = {
   end_with_newline: true,
   indent_size: 2,
   unformatted: [
@@ -17,7 +19,11 @@ const beautifyConfig: HTMLBeautifyOptions = {
 }
 
 function formatHtml(html: string): string {
-  return html_beautify(html, beautifyConfig)
+  return html_beautify(html, beautifyConfigHTML)
+}
+
+function formatScript(js: string): string {
+  return prettier.format(js, config.prettierConfig)
 }
 
 function pascalToKebab(str: string): string {
@@ -29,5 +35,6 @@ function pascalToKebab(str: string): string {
 
 export default {
   formatHtml,
+  formatScript,
   pascalToKebab,
 }

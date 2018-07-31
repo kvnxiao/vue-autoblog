@@ -7,12 +7,21 @@ import format from "./format"
 
 class VueTemplate {
   public readonly template: string = fs.readFileSync(
-    path.resolve(__dirname, "../templates/template.vue"),
+    path.resolve(__dirname, "../templates", "vue", "template.vue"),
+    "utf8",
+  )
+
+  public readonly script: string = fs.readFileSync(
+    path.resolve(__dirname, "../templates", "vue", "script.vue"),
     "utf8",
   )
 
   public generate(entry: MarkdownEntry): string {
-    const html = entry.markdown.rawContent
+    let html = entry.markdown.parseToHTML()
+    if (html.endsWith("\n")) {
+      html = html.substring(0, html.length - 1)
+    }
+
     const id = entry.fileInfo.name
     const classNames = config.style ? config.style.classNames : undefined
 
@@ -20,13 +29,15 @@ class VueTemplate {
       ? `id="${format.pascalToKebab(id)}" class="${classNames}"`
       : `id="${format.pascalToKebab(id)}"`
 
+    const template = format.formatHtml(util.format(this.template, idStr, html))
     if (config.vue && config.vue.outputMeta) {
       if (entry.markdown.frontMatter && entry.markdown.frontMatter.metaInfo) {
         const metaInfo = entry.markdown.frontMatter.metaInfo
-        return format.formatHtml(util.format(this.template, idStr, html, util.inspect(metaInfo)))
+        const metaScript = format.formatScript(util.format(this.script, util.inspect(metaInfo)))
+        return template + `\n<script>\n${metaScript}</script>\n`
       }
     }
-    return format.formatHtml(util.format(this.template, idStr, html, ""))
+    return template
   }
 }
 

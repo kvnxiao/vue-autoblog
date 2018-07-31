@@ -1,6 +1,6 @@
 import * as fs from "fs"
 import * as markdownit from "markdown-it"
-import files from "./files"
+import * as prettier from "prettier"
 
 const outputTypes = {
   html: true,
@@ -47,6 +47,7 @@ class Config implements IConfig {
   public readonly style?: StyleOptions
   public readonly outputType: string
   public readonly vue?: VueOptions
+  public readonly prettierConfig: prettier.Options
 
   private constructor() {
     const configJson = fs.readFileSync(".autoblog.json", "utf8")
@@ -57,6 +58,14 @@ class Config implements IConfig {
     this.outputType = configContent.outputType
     this.style = configContent.style
     this.vue = configContent.vue
+    if (fs.existsSync(".prettierrc")) {
+      this.prettierConfig = JSON.parse(fs.readFileSync(".prettierrc", "utf8")) as prettier.Options
+      this.prettierConfig.parser = "babylon"
+    } else {
+      this.prettierConfig = {
+        parser: "babylon",
+      }
+    }
 
     if (!this.validate()) {
       throw new Error("failed to validate config.")
