@@ -37,12 +37,12 @@ class Config implements IConfig {
 
   public readonly markdownit: markdownit.Options
   public readonly directory: DirectoryOptions
-  public readonly style: StyleOptions | undefined
+  public readonly style?: StyleOptions
   public readonly outputType: string
 
   private constructor() {
-    const buf = fs.readFileSync(".autoblog.json")
-    const configContent = JSON.parse(buf.toString("utf8")) as IConfig
+    const configJson = fs.readFileSync(".autoblog.json", "utf8")
+    const configContent = JSON.parse(configJson) as IConfig
 
     this.directory = configContent.directory
     this.markdownit = configContent.markdownit

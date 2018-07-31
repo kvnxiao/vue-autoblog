@@ -1,5 +1,4 @@
 node_modules/
 src/ts-out/
 
-/.autoblog.json
 test/autoblog-out/

@@ -1,26 +1,10 @@
 import * as fs from "fs"
-import { html_beautify } from "js-beautify"
 import * as yaml from "js-yaml"
 import * as markdownit from "markdown-it"
 import config from "./config"
 
 const separator = "---"
 const md = new markdownit(config.markdownit)
-const beautifyConfig: HTMLBeautifyOptions = {
-  end_with_newline: true,
-  indent_size: 2,
-  unformatted: [
-    // https://www.w3.org/TR/html5/dom.html#phrasing-content
-    "a", "abbr", "area", "audio", "b", "bdi", "bdo", "br", "button", "canvas", "cite",
-    "code", "data", "datalist", "del", "dfn", "em", "embed", "i", "iframe", "img",
-    "input", "ins", "kbd", "keygen", "label", "map", "mark", "math", "meter", "noscript",
-    "object", "output", "progress", "q", "ruby", "s", "samp", /* "script", */ "select", "small",
-    "span", "strong", "sub", "sup", "svg", "textarea", "time", "u", "var",
-    "video", "wbr", "text",
-    // prexisting - not sure of full effect of removing, leaving in
-    "acronym", "address", "big", "dt", "ins", "strike", "tt",
-  ],
-}
 
 export class MarkdownFile {
   public readonly frontMatter?: any
@@ -31,10 +15,8 @@ export class MarkdownFile {
     this.frontMatter = frontMatter
   }
 
-  public parseToHTML(formatted: boolean = false): string {
-    return (formatted)
-      ? html_beautify(md.render(this.rawContent), beautifyConfig)
-      : md.render(this.rawContent)
+  public parseToHTML(): string {
+    return md.render(this.rawContent)
   }
 }
 

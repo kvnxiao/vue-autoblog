@@ -2,6 +2,7 @@ import * as fs from "fs"
 import config from "./config"
 import files, { FileInfo } from "./files"
 import md, { MarkdownFile } from "./md"
+import template from "./template"
 
 const inputType = ".md"
 const inputTypeExt = "md"
@@ -65,11 +66,16 @@ function generate() {
 }
 
 function generateVue(entry: MarkdownEntry) {
-  fs.writeFileSync(entry.fileInfo.fullPath, entry.markdown.parseToHTML(true), { encoding: "utf8" })
+  const html = entry.markdown.parseToHTML()
+  const output = config.style
+    ? template.vue.generate(html, entry.fileInfo.name, config.style.classNames)
+    : template.vue.generate(html, entry.fileInfo.name)
+  fs.writeFileSync(entry.fileInfo.fullPath, output, { encoding: "utf8" })
 }
 
 function generateHtml(entry: MarkdownEntry) {
-  fs.writeFileSync(entry.fileInfo.fullPath, entry.markdown.parseToHTML(true), { encoding: "utf8" })
+  const html = entry.markdown.parseToHTML()
+  fs.writeFileSync(entry.fileInfo.fullPath, entry.markdown.parseToHTML(), { encoding: "utf8" })
 }
 
 export default {
