@@ -1,0 +1,15 @@
+{
+  "markdownit": {
+    "xhtmlOut": true,
+    "linkify": true,
+    "typographer": true
+  },
+  "directory": {
+    "inputFolder": "blog/",
+    "outputFolder": "autoblog-out/"
+  },
+  "style": {
+    "classNames": "blog"
+  },
+  "outputType": "vue"
+}
