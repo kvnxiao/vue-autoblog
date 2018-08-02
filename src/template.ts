@@ -7,12 +7,12 @@ import format from "./format"
 
 class VueTemplate {
   public readonly template: string = fs.readFileSync(
-    path.resolve(__dirname, "../templates", "vue", "template.vue"),
+    path.resolve(".", "src", "templates", "vue", "template.vue"),
     "utf8",
   )
 
   public readonly script: string = fs.readFileSync(
-    path.resolve(__dirname, "../templates", "vue", "script.vue"),
+    path.resolve(".", "src", "templates", "vue", "script.vue"),
     "utf8",
   )
 

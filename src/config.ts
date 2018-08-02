@@ -1,5 +1,6 @@
 import * as fs from "fs"
 import * as markdownit from "markdown-it"
+import * as path from "path"
 import * as prettier from "prettier"
 
 const outputTypes = {
@@ -50,7 +51,7 @@ class Config implements IConfig {
   public readonly prettierConfig: prettier.Options
 
   private constructor() {
-    const configJson = fs.readFileSync(".autoblog.json", "utf8")
+    const configJson = fs.readFileSync(path.resolve(".", ".autoblog.json"), "utf8")
     const configContent = JSON.parse(configJson) as IConfig
 
     this.directory = configContent.directory

@@ -1,3 +1,11 @@
 import autoblog from "./autoblog"
 
-autoblog.generate()
+function main() {
+  autoblog.generate()
+}
+
+export default {
+  main,
+}
+
+main()

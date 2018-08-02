@@ -1,4 +1,5 @@
 node_modules/
-src/ts-out/
+coverage
+.nyc_output
 
-test/autoblog-out/
+test/autoblog-out
