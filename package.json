@@ -27,8 +27,8 @@
   },
   "scripts": {
     "clean": "rimraf build .nyc_output coverage",
-    "build": "tsc",
-    "test": "nyc ava build/test/test.js"
+    "build": "yarn run clean && tsc",
+    "test": "yarn run build && nyc ava build/test/test.js"
   },
   "nyc": {
     "extension": [
