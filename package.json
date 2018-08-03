@@ -29,7 +29,7 @@
   "scripts": {
     "clean": "rimraf build .nyc_output coverage",
     "build": "yarn run clean && tsc",
-    "test": "yarn run build && nyc ava build/test/test.js",
+    "test": "yarn run build && nyc ava build/test/",
     "lint": "tslint src/**/*.ts test/**/*.ts"
   },
   "nyc": {

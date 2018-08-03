@@ -27,10 +27,28 @@ function formatScript(js: string): string {
 }
 
 function pascalToKebab(str: string): string {
-  return str
-    .match(/($[a-z])|[A-Z][^A-Z]+/g)!
-    .join("-")
-    .toLowerCase()
+  if (isAlphaNumeric(str)) {
+    return str
+      .match(/($[a-zA-Z])|[A-Z][^A-Z]*/g)!
+      .join("-")
+      .toLowerCase()
+  } else {
+    return str
+  }
+}
+
+function isAlphaNumeric(str: string): boolean {
+  const len = str.length
+  let i = 0
+  for (i = 0; i < len; i++) {
+    const c = str.charCodeAt(i)
+    if (!(c > 47 && c < 58)
+      && !(c > 64 && c < 91)
+      && !(c > 96 && c < 123)) {
+        return false
+      }
+  }
+  return true
 }
 
 export default {

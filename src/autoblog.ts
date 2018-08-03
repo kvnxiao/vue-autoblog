@@ -62,6 +62,7 @@ function generate() {
           break
         }
       }
+      return it
     })
 }
 
