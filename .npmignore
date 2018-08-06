@@ -1,0 +1,8 @@
+test/
+testdata/
+coverage/
+.nyc_output/
+.vscode/
+.autoblog.json
+.prettierrc
+node_modules/
