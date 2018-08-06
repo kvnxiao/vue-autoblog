@@ -4,7 +4,8 @@ import config from "./config"
 
 const beautifyConfigHTML: HTMLBeautifyOptions = {
   end_with_newline: true,
-  indent_size: 2,
+  indent_char: config.prettierConfig.useTabs ? "\t" : " ",
+  indent_size: config.prettierConfig.tabWidth,
   unformatted: [
     // https://www.w3.org/TR/html5/dom.html#phrasing-content
     "a", "abbr", "area", "audio", "b", "bdi", "bdo", "br", "button", "canvas", "cite",
