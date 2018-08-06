@@ -1,11 +1,12 @@
 {
   "name": "vue-autoblog",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A compile-time tool to generate Vue template files (*.vue) from markdown files (*.md)",
   "main": "src/ts-out/main.js",
   "repository": "https://github.com/kvnxiao/vue-autoblog",
   "author": "Kevin (Ze Hao) Xiao",
   "license": "Apache-2.0",
+  "private": false,
   "directories": {
     "test": "test",
     "example": "testdata"
