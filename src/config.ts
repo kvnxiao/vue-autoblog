@@ -13,10 +13,6 @@ interface DirectoryOptions {
   outputFolder: string
 }
 
-interface StyleOptions {
-  classNames: string
-}
-
 interface VueOptions {
   outputMeta: boolean
 }
@@ -29,7 +25,7 @@ interface IConfig {
   directory: DirectoryOptions
 
   // css style options
-  style?: StyleOptions
+  defaultStyle?: string
 
   // output type
   outputType: string
@@ -45,7 +41,7 @@ class Config implements IConfig {
 
   public readonly markdownit: markdownit.Options
   public readonly directory: DirectoryOptions
-  public readonly style?: StyleOptions
+  public readonly defaultStyle?: string
   public readonly outputType: string
   public readonly vue?: VueOptions
   public readonly prettierConfig: prettier.Options
@@ -57,7 +53,7 @@ class Config implements IConfig {
     this.directory = configContent.directory
     this.markdownit = configContent.markdownit
     this.outputType = configContent.outputType
-    this.style = configContent.style
+    this.defaultStyle = configContent.defaultStyle
     this.vue = configContent.vue
     if (fs.existsSync(".prettierrc")) {
       this.prettierConfig = JSON.parse(fs.readFileSync(".prettierrc", "utf8")) as prettier.Options

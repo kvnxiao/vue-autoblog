@@ -8,9 +8,7 @@
     "inputFolder": "testdata/blog/",
     "outputFolder": "testdata/autoblog-out/"
   },
-  "style": {
-    "classNames": "blog"
-  },
+  "defaultStyle": "blog",
   "outputType": "vue",
   "vue": {
     "outputMeta": true

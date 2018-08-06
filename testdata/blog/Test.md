@@ -1,8 +1,5 @@
 ---
-title: Blog Post 1
-
-metaInfo:
-  title: Blog Post 1
+title: Blog Post 123
 ---
 
 # This is a blog test!

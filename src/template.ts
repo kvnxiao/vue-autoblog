@@ -23,21 +23,34 @@ class VueTemplate {
     }
 
     const id = entry.fileInfo.name
-    const classNames = config.style ? config.style.classNames : undefined
+    const classNames =
+      entry.markdown.frontMatter && entry.markdown.frontMatter.style !== undefined
+        ? entry.markdown.frontMatter.style   // front-matter style name override
+        : config.defaultStyle                // default style from config
 
     const idStr = classNames
       ? `id="${format.pascalToKebab(id)}" class="${classNames}"`
       : `id="${format.pascalToKebab(id)}"`
 
     const template = format.formatHtml(util.format(this.template, idStr, html))
-    if (config.vue && config.vue.outputMeta) {
-      if (entry.markdown.frontMatter && entry.markdown.frontMatter.metaInfo) {
-        const metaInfo = entry.markdown.frontMatter.metaInfo
-        const metaScript = format.formatScript(util.format(this.script, util.inspect(metaInfo)))
-        return template + `\n<script>\n${metaScript}</script>\n`
-      }
+
+    // output meta-info from frontmatter
+    if (config.vue && config.vue.outputMeta && entry.markdown.frontMatter) {
+      const metaInfo = this.createMetaInfo(entry.markdown.frontMatter)
+      const metaScript = format.formatScript(util.format(this.script, util.inspect(metaInfo)))
+      return template + `\n<script>\n${metaScript}</script>\n`
     }
     return template
+  }
+
+  private createMetaInfo(frontMatter: any): object {
+    // extract root-level title and place inside meta obj
+    const metaInfo = frontMatter.metaInfo ? frontMatter.metaInfo : {}
+    // take meta-info title from default root-level title if it exists
+    if (frontMatter.title && !metaInfo.title) {
+      metaInfo.title = frontMatter.title
+    }
+    return metaInfo
   }
 }
 

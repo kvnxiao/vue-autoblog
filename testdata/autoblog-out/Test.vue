@@ -8,6 +8,6 @@
 
 <script>
 export default {
-  metaInfo: { title: "Blog Post 1" },
+  metaInfo: { title: "Blog Post 123" },
 }
 </script>

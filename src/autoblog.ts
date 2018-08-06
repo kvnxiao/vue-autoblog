@@ -68,7 +68,7 @@ function generate() {
 
 function generateVue(entry: MarkdownEntry) {
   const html = entry.markdown.parseToHTML()
-  const output = config.style ? template.vue.generate(entry) : template.vue.generate(entry)
+  const output = template.vue.generate(entry)
   fs.writeFileSync(entry.fileInfo.fullPath, output, { encoding: "utf8" })
 }
 

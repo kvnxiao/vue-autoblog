@@ -2,7 +2,7 @@
 title: Another Test Post
 
 metaInfo:
-  title: Another Test Post
+  title: Another Test Post Title Overriden
 ---
 
 # This is another blog post!
