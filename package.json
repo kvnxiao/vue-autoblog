@@ -6,6 +6,10 @@
   "repository": "https://github.com/kvnxiao/vue-autoblog",
   "author": "Kevin (Ze Hao) Xiao",
   "license": "Apache-2.0",
+  "directories": {
+    "test": "test",
+    "example": "testdata"
+  },
   "dependencies": {
     "js-beautify": "^1.7.5",
     "js-yaml": "^3.12.0",
