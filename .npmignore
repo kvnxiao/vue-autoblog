@@ -6,4 +6,5 @@ coverage/
 .autoblog.json
 .prettierrc
 node_modules/
+!build/
 build/test/
