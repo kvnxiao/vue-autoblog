@@ -4,6 +4,13 @@ import * as util from "util"
 import { MarkdownEntry } from "./autoblog"
 import config from "./config"
 import format from "./format"
+import { PostInfo, RouteInfo } from "./meta"
+import meta from "./meta"
+
+export const AUTO_ROUTES = "auto-routes.js"
+export const AUTO_ROUTES_TYPINGS = "auto-routes.d.ts"
+export const AUTO_POSTS = "auto-entries.js"
+export const AUTO_POSTS_TYPINGS = "auto-entries.d.ts"
 
 class VueTemplate {
   public readonly template: string = fs.readFileSync(
@@ -16,7 +23,27 @@ class VueTemplate {
     "utf8",
   )
 
-  public generate(entry: MarkdownEntry): string {
+  public readonly routes: string = fs.readFileSync(
+    path.resolve(__dirname, "../../", "src", "templates", "vue", AUTO_ROUTES),
+    "utf8",
+  )
+
+  public readonly routeTypings: string = fs.readFileSync(
+    path.resolve(__dirname, "../../", "src", "templates", "vue", AUTO_ROUTES_TYPINGS),
+    "utf8",
+  )
+
+  public readonly postEntries: string = fs.readFileSync(
+    path.resolve(__dirname, "../../", "src", "templates", "vue", AUTO_POSTS),
+    "utf8",
+  )
+
+  public readonly postTypings: string = fs.readFileSync(
+    path.resolve(__dirname, "../../", "src", "templates", "vue", AUTO_POSTS_TYPINGS),
+    "utf8",
+  )
+
+  public generateVue(entry: MarkdownEntry): string {
     let html = entry.markdown.parseToHTML()
     if (html.endsWith("\n")) {
       html = html.substring(0, html.length - 1)
@@ -25,8 +52,8 @@ class VueTemplate {
     const id = entry.fileInfo.name
     const classNames =
       entry.markdown.frontMatter && entry.markdown.frontMatter.style !== undefined
-        ? entry.markdown.frontMatter.style   // front-matter style name override
-        : config.defaultStyle                // default style from config
+        ? entry.markdown.frontMatter.style // front-matter style name override
+        : config.defaultStyle // default style from config
 
     const idStr = classNames
       ? `id="${format.pascalToKebab(id)}" class="${classNames}"`
@@ -36,24 +63,26 @@ class VueTemplate {
 
     // output meta-info from frontmatter
     if (config.vue && config.vue.outputMeta && entry.markdown.frontMatter) {
-      const metaInfo = this.createMetaInfo(entry.markdown.frontMatter)
+      const metaInfo = meta.createMetaInfo(entry.markdown.frontMatter)
       const metaScript = format.formatScript(util.format(this.script, util.inspect(metaInfo)))
       return template + `\n<script>\n${metaScript}</script>\n`
     }
     return template
   }
 
-  private createMetaInfo(frontMatter: any): object {
-    // extract root-level title and place inside meta obj
-    const metaInfo = frontMatter.metaInfo ? frontMatter.metaInfo : {}
-    // take meta-info title from default root-level title if it exists
-    if (frontMatter.title && !metaInfo.title) {
-      metaInfo.title = frontMatter.title
-    }
-    return metaInfo
+  public generateRoutes(routes: RouteInfo[]): string {
+    const imports = routes.map(it => it.getImport()).join("\n")
+    const list = routes.map(it => it.toString()).join(",\n")
+    return format.formatScript(util.format(this.routes, imports, list))
+  }
+
+  public generatePostEntries(posts: PostInfo[]): string {
+    const list = posts
+      .filter(it => Object.keys(it).length > 0)
+      .map(it => util.inspect(it))
+      .join(",\n")
+    return format.formatScript(util.format(this.postEntries, list))
   }
 }
 
-export default {
-  vue: new VueTemplate(),
-}
+export const vue = new VueTemplate()

@@ -30,6 +30,9 @@ interface IConfig {
   // output type
   outputType: string
 
+  // using typescript
+  typescript?: boolean
+
   // vue options
   vue?: VueOptions
 }
@@ -44,6 +47,7 @@ class Config implements IConfig {
   public readonly defaultStyle?: string
   public readonly outputType: string
   public readonly vue?: VueOptions
+  public readonly typescript?: boolean
   public readonly prettierConfig: prettier.Options
 
   private constructor() {
@@ -54,6 +58,7 @@ class Config implements IConfig {
     this.markdownit = configContent.markdownit
     this.outputType = configContent.outputType
     this.defaultStyle = configContent.defaultStyle
+    this.typescript = configContent.typescript
     this.vue = configContent.vue
     if (fs.existsSync(".prettierrc")) {
       this.prettierConfig = JSON.parse(fs.readFileSync(".prettierrc", "utf8")) as prettier.Options
