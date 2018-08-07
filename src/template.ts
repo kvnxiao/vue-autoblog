@@ -1,6 +1,7 @@
 import * as fs from "fs"
+import * as Handlebars from "handlebars"
 import * as path from "path"
-import * as util from "util"
+import { inspect } from "util"
 import { MarkdownEntry } from "./autoblog"
 import config from "./config"
 import format from "./format"
@@ -59,13 +60,19 @@ class VueTemplate {
       ? `id="${format.pascalToKebab(id)}" class="${classNames}"`
       : `id="${format.pascalToKebab(id)}"`
 
-    const template = format.formatHtml(util.format(this.template, idStr, html))
+    const template = format.formatHtml(
+      compileTemplate(this.template, { attr: idStr, content: html }),
+    )
 
     // output meta-info from frontmatter
     if (config.vue && config.vue.outputMeta && entry.markdown.frontMatter) {
       const metaInfo = meta.createMetaInfo(entry.markdown.frontMatter)
-      const metaScript = format.formatScript(util.format(this.script, util.inspect(metaInfo)))
-      return template + `\n<script>\n${metaScript}</script>\n`
+      const metaScript = format.formatScript(
+        compileTemplate(this.script, { metaInfo: inspect(metaInfo) }),
+      )
+      return Object.keys(metaInfo).length > 0
+        ? template + `\n<script>\n${metaScript}</script>\n`
+        : template
     }
     return template
   }
@@ -73,16 +80,20 @@ class VueTemplate {
   public generateRoutes(routes: RouteInfo[]): string {
     const imports = routes.map(it => it.getImport()).join("\n")
     const list = routes.map(it => it.toString()).join(",\n")
-    return format.formatScript(util.format(this.routes, imports, list))
+    return format.formatScript(compileTemplate(this.routes, { imports, list }))
   }
 
   public generatePostEntries(posts: PostInfo[]): string {
-    const list = posts
+    const s = posts
       .filter(it => Object.keys(it).length > 0)
-      .map(it => util.inspect(it))
+      .map(it => inspect(it))
       .join(",\n")
-    return format.formatScript(util.format(this.postEntries, list))
+    return format.formatScript(compileTemplate(this.postEntries, s))
   }
+}
+
+function compileTemplate(content: string, context: any): string {
+  return Handlebars.compile(content)(context)
 }
 
 export const vue = new VueTemplate()

@@ -60,14 +60,8 @@ class Config implements IConfig {
     this.defaultStyle = configContent.defaultStyle
     this.typescript = configContent.typescript
     this.vue = configContent.vue
-    if (fs.existsSync(".prettierrc")) {
-      this.prettierConfig = JSON.parse(fs.readFileSync(".prettierrc", "utf8")) as prettier.Options
-      this.prettierConfig.parser = "babylon"
-    } else {
-      this.prettierConfig = {
-        parser: "babylon",
-      }
-    }
+    this.prettierConfig = prettier.resolveConfig.sync(path.resolve(".", ".package.json")) || {}
+    this.prettierConfig.parser = "babylon"
 
     if (!this.validate()) {
       throw new Error("failed to validate config.")

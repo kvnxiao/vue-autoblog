@@ -1,5 +1,5 @@
 const entries = [
-%s
+{{{entries}}}
 ];
 
 export default entries;

@@ -1,5 +1,5 @@
 <template>
-  <div %s>
-    %s
+  <div {{{attr}}}>
+    {{{content}}}
   </div>
 </template>

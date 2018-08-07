@@ -1,4 +1,4 @@
 import { RouteConfig } from "vue-router";
 
-declare const autoRoutes: RouteConfig[];
-export default autoRoutes;
+declare const routes: RouteConfig[];
+export default routes;

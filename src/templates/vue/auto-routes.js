@@ -1,7 +1,7 @@
-%s
+{{{imports}}}
 
-const autoRoutes = [
-%s
+const routes = [
+{{{list}}}
 ];
 
-export default autoRoutes;
+export default routes;
