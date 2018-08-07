@@ -84,11 +84,11 @@ class VueTemplate {
   }
 
   public generatePostEntries(posts: PostInfo[]): string {
-    const s = posts
+    const entries = posts
       .filter(it => Object.keys(it).length > 0)
       .map(it => inspect(it))
       .join(",\n")
-    return format.formatScript(compileTemplate(this.postEntries, s))
+    return format.formatScript(compileTemplate(this.postEntries, { entries }))
   }
 }
 

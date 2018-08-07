@@ -1,4 +1,5 @@
 import { MarkdownEntry } from "./autoblog"
+import config from "./config"
 import format from "./format"
 
 export interface PostInfo {
@@ -33,7 +34,7 @@ export class RouteInfo {
   }
 
   public getImport(): string {
-    return `import ${this.componentName} from "@/${this.file}";`
+    return `import ${this.componentName} from "${this.file}";`
   }
 }
 
@@ -51,10 +52,15 @@ function createPostInfo(entry: MarkdownEntry): EntryInfo {
   const frontMatter = entry.markdown.frontMatter
   const componentName = entry.fileInfo.name
   const name = format.pascalToKebab(componentName)
-  const path = frontMatter.permalink
-    ? frontMatter.permalink + "/" + name
-    : entry.fileInfo.folder + "/" + name
-  const file = entry.fileInfo.fullPath
+  const pathPrefixLength = config.directory.outputFolder.endsWith("/")
+    ? config.directory.outputFolder.length - 1
+    : config.directory.outputFolder.length
+  const permalink = frontMatter.permalink
+    ? frontMatter.permalink
+    : (entry.fileInfo.folder + "/" + name).substring(pathPrefixLength)
+  const file = entry.fileInfo.fullPath.startsWith("src/")
+    ? `@/${entry.fileInfo.fullPath.substring(4)}`
+    : entry.fileInfo.fullPath
 
   // set entry-info up for util.inspect (don't show undefined values)
   const postInfo: PostInfo = {}
@@ -74,12 +80,12 @@ function createPostInfo(entry: MarkdownEntry): EntryInfo {
     postInfo.title = frontMatter.title
   }
   if (Object.keys(postInfo).length > 0) {
-    postInfo.path = path
+    postInfo.path = permalink
   }
 
   return {
     postInfo,
-    routeInfo: new RouteInfo(path, name, componentName, file),
+    routeInfo: new RouteInfo(permalink, name, componentName, file),
   }
 }
 
