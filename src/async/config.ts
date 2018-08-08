@@ -1,7 +1,6 @@
-import * as fs from "fs"
-import * as markdownit from "markdown-it"
 import * as path from "path"
 import * as prettier from "prettier"
+import * as files from "./files"
 
 const outputTypes = {
   html: true,
@@ -17,7 +16,36 @@ interface DirectoryOptions {
   outputFolder: string
 }
 
-interface AutoblogConfigFile {
+export class AutoblogConfig implements Config {
+  public readonly markdownit: markdownit.Options
+  public readonly directory: DirectoryOptions
+  public readonly defaultStyle?: string
+  public readonly outputType: string
+  public readonly typescript: boolean
+  public readonly vue: VueOptions
+
+  public readonly prettierConfig: prettier.Options
+
+  constructor(
+    markdownit: markdownit.Options,
+    directory: DirectoryOptions,
+    defaultStyle: string | undefined,
+    outputType: string,
+    typescript: boolean,
+    vue: VueOptions,
+    prettierConfig: prettier.Options,
+  ) {
+    this.markdownit = markdownit
+    this.directory = directory
+    this.defaultStyle = defaultStyle
+    this.outputType = outputType
+    this.typescript = typescript
+    this.vue = vue
+    this.prettierConfig = prettierConfig
+  }
+}
+
+export interface Config {
   // markdown-it options
   markdownit: markdownit.Options
 
@@ -37,55 +65,45 @@ interface AutoblogConfigFile {
   vue?: VueOptions
 }
 
-class Config {
-  public readonly directory: DirectoryOptions
-  public readonly markdownitOptions: markdownit.Options
-  public readonly outputType: string
-  public readonly vueOptions: VueOptions
-  public readonly useTypescript: boolean
-  public readonly defaultCssStyle?: string
-  public readonly prettierConfig: prettier.Options
+export async function loadConfig(configPath: string): Promise<AutoblogConfig> {
+  const configFile = await files.readFile(configPath, files.UTF8)
+  const json = JSON.parse(configFile)
 
-  // Load config files synchronously as the config is referenced in many other class methods
-  constructor() {
-    const config = fs.readFileSync(path.resolve(".", ".autoblog.json"), { encoding: "utf8" })
-    const configJson = JSON.parse(config) as AutoblogConfigFile
+  const prettierConfig = (await prettier.resolveConfig(path.resolve(configPath))) || {}
+  if (!prettierConfig.parser) {
+    prettierConfig.parser = "babylon"
+  }
 
-    this.outputType = configJson.outputType || "vue"
-    this.markdownitOptions = configJson.markdownit || {
+  const config: AutoblogConfig = new AutoblogConfig(
+    json.markdownit || {
       linkify: true,
       typographer: true,
       xhtmlOut: true,
-    }
-    this.vueOptions = configJson.vue || {
-      outputMeta: true,
-    }
-    this.useTypescript = configJson.typescript || false
-    this.defaultCssStyle = configJson.defaultStyle
-    this.prettierConfig = prettier.resolveConfig.sync(path.resolve(".", "package.json")) || {}
-    if (!this.prettierConfig.parser) {
-      this.prettierConfig.parser = "babylon"
-    }
-    this.directory = configJson.directory || {
+    },
+    json.directory || {
       inputFolder: "src/md/",
       outputFolder: "src/autoblog/",
-    }
+    },
+    json.defaultStyle,
+    json.outputType || "vue",
+    json.typescript || false,
+    json.vue || {
+      outputMeta: true,
+    },
+    prettierConfig,
+  )
 
-    this.validate()
+  // validate config
+  if (!(config.outputType in outputTypes)) {
+    throw new Error("ERROR: Unsupported outputType in config!")
+  }
+  // check if input exists
+  const inputFolderExists = await files.exists(config.directory.inputFolder)
+  if (!inputFolderExists) {
+    throw new Error(
+      `ERROR: Failed to read input folder "${config.directory.inputFolder}". Make sure this directory exists!`,
+    )
   }
 
-  private validate() {
-    if (!(this.outputType in outputTypes)) {
-      throw new Error("ERROR: Unsupported outputType in config!")
-    }
-
-    // check if input exists
-    if (!fs.existsSync(this.directory.inputFolder)) {
-      throw new Error(
-        `ERROR: Failed to read input folder ${this.directory.inputFolder}. Make sure this directory exists!`,
-      )
-    }
-  }
+  return config
 }
-
-export default new Config()

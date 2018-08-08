@@ -1,5 +1,0 @@
-<template>
-  <div {{{attr}}}>
-    {{{content}}}
-  </div>
-</template>
