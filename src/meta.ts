@@ -1,6 +1,10 @@
-import { MarkdownEntry } from "./autoblog"
-import config from "./config"
+import { ParsedFile } from "./autoblog"
 import format from "./format"
+
+export interface EntryInfo {
+  routeInfo: RouteInfo
+  postInfo: PostInfo
+}
 
 export interface PostInfo {
   description?: string
@@ -9,11 +13,6 @@ export interface PostInfo {
   categories?: string[]
   tags?: string[]
   path?: string
-}
-
-export interface EntryInfo {
-  routeInfo: RouteInfo
-  postInfo: PostInfo
 }
 
 export class RouteInfo {
@@ -38,29 +37,28 @@ export class RouteInfo {
   }
 }
 
-function createMetaInfo(frontMatter: any): object {
+export function extractMetaInfo(frontMatter?: any): any {
   // extract root-level title and place inside meta obj
-  const metaInfo = frontMatter.metaInfo ? frontMatter.metaInfo : {}
-  // take meta-info title from default root-level title if it exists
+  const metaInfo = frontMatter.metaInfo || {}
+  // prefer to use meta-info's title over default root-level title
   if (frontMatter.title && !metaInfo.title) {
     metaInfo.title = frontMatter.title
   }
   return metaInfo
 }
 
-function createPostInfo(entry: MarkdownEntry): EntryInfo {
+export function parseInfo(entry: ParsedFile, outputFolder: string): EntryInfo {
   const frontMatter = entry.markdown.frontMatter
-  const componentName = entry.fileInfo.name
+  const componentName = entry.output.name
   const name = format.pascalToKebab(componentName)
-  const pathPrefixLength = config.directory.outputFolder.endsWith("/")
-    ? config.directory.outputFolder.length - 1
-    : config.directory.outputFolder.length
-  const permalink = frontMatter.permalink
-    ? frontMatter.permalink
-    : (entry.fileInfo.folder + "/" + name).substring(pathPrefixLength)
-  const file = entry.fileInfo.fullPath.startsWith("src/")
-    ? `@/${entry.fileInfo.fullPath.substring(4)}`
-    : entry.fileInfo.fullPath
+
+  // get permalink url
+  const pathPrefixLength = outputFolder.endsWith("/") ? outputFolder.length - 1 : outputFolder.length
+  const permalink = frontMatter.permalink || (entry.output.folder + "/" + name).substring(pathPrefixLength)
+
+  const file = entry.output.fullPath.startsWith("src/")
+    ? `@/${entry.output.fullPath.substring(4)}`
+    : entry.output.fullPath
 
   // set entry-info up for util.inspect (don't show undefined values)
   const postInfo: PostInfo = {}
@@ -87,9 +85,4 @@ function createPostInfo(entry: MarkdownEntry): EntryInfo {
     postInfo,
     routeInfo: new RouteInfo(permalink, name, componentName, file),
   }
-}
-
-export default {
-  createMetaInfo,
-  createPostInfo,
 }

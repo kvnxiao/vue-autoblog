@@ -1,141 +1,104 @@
 import * as fs from "fs"
 import * as path from "path"
+import { promisify } from "util"
+
+const ENOENT = "ENOENT"
+export const mkdir = promisify(fs.mkdir)
+export const stat = promisify(fs.stat)
+export const exists = promisify(fs.exists)
+export const readDir = promisify(fs.readdir)
+export const readFile = promisify(fs.readFile)
+export const writeFile = promisify(fs.writeFile)
+export const UTF8 = { encoding: "utf8" }
 
 interface DirectoryInfo {
   directories: string[]
   files: string[]
 }
 
-interface FileInfoOptions {
-  extension: string
-  replaceDir?: {
-    startFrom: string,
-    to: string,
-  }
-}
-
-export class FileInfo {
-  public readonly fullPath: string
-  public readonly folder: string
-  public readonly name: string
-  public readonly extension: string
-  public get fileNameWithExtension(): string {
-    return path.join(this.folder, this.name)
-  }
-
-  constructor(fullPath: string) {
-    this.fullPath = fullPath
-
-    const periodIndex = fullPath.lastIndexOf(".")
-    const lastSep = fullPath.lastIndexOf(path.sep)
-    const fileExtension = fullPath.substring(periodIndex + 1)
-    const fileName = fullPath.substring(lastSep + 1, periodIndex)
-    const folderPath = fullPath.substring(0, lastSep)
-
-    this.folder = folderPath
-    this.extension = fileExtension
-    this.name = fileName
-  }
-
-  public changeTo(options: FileInfoOptions): FileInfo {
-    const extension: string = options.extension || this.extension
-    const folderPath = options.replaceDir
-      ? replaceDir(this.folder, options.replaceDir.startFrom, options.replaceDir.to)
-      : this.folder
-
-    return new FileInfo(path.join(folderPath, this.name + "." + extension))
-  }
-}
-
 /**
- * Create parent directories if needed.
+ * Create parent directories if needed
  *
- * @param dir the directory to create with parents
+ * @param dir the directory to create, including parent folders
+ * @param mode permission mode, defaults to 777 if not provided
  */
-function mkdirp(dir: string): boolean {
-  const split = dir.split(path.sep)
-
-  // clean trailing "/"
-  if (split[split.length - 1] === path.sep) {
-    split.pop()
-  }
-
-  let currPath = ""
-  for (const p of split) {
-    currPath = path.join(currPath, p)
-    try {
-      fs.mkdirSync(currPath)
-    } catch (err) {
-      if (err.errno !== -17) {
-        console.error(err)
-        return false
-      }
+export async function mkdirp(dir: string, mode = 0o777) {
+  try {
+    await mkdir(dir, mode)
+  } catch (err) {
+    switch (err.code) {
+      case ENOENT:
+        await mkdirp(path.dirname(dir), mode)
+        await mkdirp(dir, mode)
+        break
+      default:
+        const stats = await stat(dir)
+        if (!stats.isDirectory()) {
+          throw err
+        }
+        break
     }
   }
-  return true
+}
+
+function endsWithCaseInsensitive(source: string, suffix: string): boolean {
+  if (source.length < suffix.length) {
+    return false
+  }
+  const end = source.substring(source.length - suffix.length).toLowerCase()
+  return end === suffix.toLowerCase()
 }
 
 /**
- * Reads directory recursively to get a list of all files and all folders in the directory.
+ * Reads directory recursively to get a list of all files and all folders in the directory
  *
- * @param currDir the current directory
- * @param fileExtLowerCase the file extension to match (filter in), in lowercase
+ * @param startPath the directory to start reading from
  */
-function listDirectory(currDir: string, fileExtLowerCase: string): DirectoryInfo {
-  const allFiles: DirectoryInfo = {
-    directories: [],
-    files: [],
+export async function listDir(startPath: string, filter?: string): Promise<DirectoryInfo> {
+  if (!exists(startPath)) {
+    throw new Error(`directory ${startPath} does not exist!`)
   }
+  const directories: string[] = []
+  const files: string[] = []
 
-  const files = fs.readdirSync(currDir).map(fileName => path.join(currDir, fileName))
-  files.forEach((filePath) => {
-    const stat = fs.statSync(filePath)
-
-    if (stat.isDirectory()) {
-      allFiles.directories.push(filePath)
-      allFiles.files = allFiles.files.concat(listDirectory(filePath, fileExtLowerCase).files)
-    } else {
-      if (filePath.toLowerCase().endsWith(fileExtLowerCase)) {
-        allFiles.files.push(filePath)
-      }
-    }
-  })
-  return allFiles
-}
-
-/**
- * Recurisvely deletes a file or directory.
- *
- * @param dirPath file or folder to delete
- */
-function deleteDirectory(dirPath: string) {
-  if (dirPath === "/") {
-    return
-  }
-
-  if (fs.existsSync(dirPath)) {
-    fs.readdirSync(dirPath).forEach((file: string) => {
-      const currPath = path.join(dirPath, file)
-      if (fs.lstatSync(currPath).isDirectory()) {
-        deleteDirectory(currPath)
+  const readdirr = async (root: string): Promise<DirectoryInfo> => {
+    const items = await readDir(root)
+    for (const item of items) {
+      const filePath = path.join(root, item)
+      const stats = await stat(filePath)
+      if (stats.isDirectory()) {
+        directories.push(filePath)
+        await readdirr(filePath)
       } else {
-        fs.unlinkSync(currPath)
+        // filter based on file extension type
+        if (filter) {
+          if (endsWithCaseInsensitive(item, filter)) {
+            files.push(filePath)
+          }
+        } else {
+          files.push(filePath)
+        }
       }
-    })
-    fs.rmdirSync(dirPath)
+    }
+    return {
+      directories,
+      files,
+    }
   }
+  return readdirr(startPath)
 }
 
-function replaceDir(dir: string, oldParent: string, newParent: string): string {
+/**
+ * Replaces the prefix-path of a directory path with a new prefix-string
+ * (changes parent directory from old parent to new parent)
+ *
+ * @param dir the directory path to replace from old to new
+ * @param oldParent the old parent prefix-path to be removed
+ * @param newParent the new parent prefix-path to use
+ */
+export function replaceDir(dir: string, oldParent: string, newParent: string): string {
   return dir.replace(
     oldParent.endsWith(path.sep) ? oldParent.substring(0, oldParent.length - 1) : oldParent,
     newParent.endsWith(path.sep) ? newParent.substring(0, newParent.length - 1) : newParent,
   )
-}
-
-export default {
-  deleteDirectory,
-  listDirectory,
-  mkdirp,
-  replaceDir,
 }

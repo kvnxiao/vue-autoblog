@@ -1,11 +1,8 @@
 import { html_beautify } from "js-beautify"
 import * as prettier from "prettier"
-import config from "./config"
 
 const beautifyConfigHTML: HTMLBeautifyOptions = {
   end_with_newline: true,
-  indent_char: config.prettierConfig.useTabs ? "\t" : " ",
-  indent_size: config.prettierConfig.tabWidth,
   unformatted: [
     // https://www.w3.org/TR/html5/dom.html#phrasing-content
     "a", "abbr", "area", "audio", "b", "bdi", "bdo", "br", "button", "canvas", "cite",
@@ -19,12 +16,17 @@ const beautifyConfigHTML: HTMLBeautifyOptions = {
   ],
 }
 
-function formatHtml(html: string): string {
-  return html_beautify(html, beautifyConfigHTML)
+function formatHtml(html: string, prettierConfig: prettier.Options): string {
+  return html_beautify(html, {
+    end_with_newline: beautifyConfigHTML.end_with_newline,
+    unformatted: beautifyConfigHTML.unformatted,
+    indent_char: prettierConfig.useTabs ? "\t" : " ",
+    indent_size: prettierConfig.tabWidth,
+  })
 }
 
-function formatScript(js: string): string {
-  return prettier.format(js, config.prettierConfig)
+function formatScript(script: string, prettierConfig: prettier.Options): string {
+  return prettier.format(script, prettierConfig)
 }
 
 function pascalToKebab(str: string): string {

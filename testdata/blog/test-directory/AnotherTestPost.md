@@ -3,6 +3,7 @@ title: Another Test Post
 
 metaInfo:
   title: Another Test Post Title Overriden
+  data2: something
 ---
 
 # This is another blog post!

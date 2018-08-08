@@ -1,35 +1,24 @@
-import * as fs from "fs"
 import * as yaml from "js-yaml"
-import * as markdownit from "markdown-it"
-import config from "./config"
+import * as files from "./files"
 
 const separator = "---"
-const md = new markdownit(config.markdownit)
 
-export class MarkdownFile {
-  public readonly frontMatter?: any
-  public readonly rawContent: string
-
-  constructor(rawContent: string, frontMatter?: any) {
-    this.rawContent = rawContent
-    this.frontMatter = frontMatter
-  }
-
-  public parseToHTML(): string {
-    return md.render(this.rawContent)
-  }
+export interface MarkdownFile {
+  rawContent: string
+  frontMatter?: any
 }
 
-function readMd(filePath: string): MarkdownFile {
-  const exists = fs.existsSync(filePath)
-  const stats = fs.statSync(filePath)
+export default async function readMarkdown(filePath: string): Promise<MarkdownFile> {
+  const exists = await files.exists(filePath)
+  const stats = await files.stat(filePath)
+
   if (!exists) {
     throw new Error(`File ${filePath} does not exist!`)
   } else if (!stats.isFile()) {
     throw new Error(`${filePath} is not a file!`)
   }
 
-  const file = fs.readFileSync(filePath, "utf8")
+  const file = await files.readFile(filePath, files.UTF8)
   const length = file.length
 
   // parse front-matter start
@@ -38,8 +27,7 @@ function readMd(filePath: string): MarkdownFile {
     let firstIndex: number
     if (length > 3 && file[3] === "\n") {
       firstIndex = 4
-    } else if (length > 4
-        && file[3] === "\r" && file[4] === "\n") {
+    } else if (length > 4 && file[3] === "\r" && file[4] === "\n") {
       firstIndex = 5
     } else {
       // tslint:disable-next-line:max-line-length
@@ -51,9 +39,9 @@ function readMd(filePath: string): MarkdownFile {
       if (file[i] === "-" && file[i + 1] === "-" && file[i + 2] === "-") {
         // deal with new-line
         let nextIndex: number
-        if (length > (i + 2) && file[i + 3] === "\n") {
+        if (length > i + 2 && file[i + 3] === "\n") {
           nextIndex = i + 4
-        } else if (length > (i + 3) && file[i + 3] === "\r" && file[i + 4] === "\n") {
+        } else if (length > i + 3 && file[i + 3] === "\r" && file[i + 4] === "\n") {
           nextIndex = i + 5
         } else {
           // tslint:disable-next-line:max-line-length
@@ -64,13 +52,14 @@ function readMd(filePath: string): MarkdownFile {
         const rawContent = file.substring(nextIndex)
 
         const frontMatter = yaml.safeLoad(frontMatterContent)
-        return new MarkdownFile(rawContent, frontMatter)
+        return {
+          rawContent,
+          frontMatter,
+        }
       }
     }
   }
-  return new MarkdownFile(file)
-}
-
-export default {
-  readMd,
+  return {
+    rawContent: file,
+  }
 }

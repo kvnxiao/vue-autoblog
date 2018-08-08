@@ -1,9 +1,12 @@
 import * as handlebars from "handlebars"
 import * as path from "path"
+import { inspect } from "util"
 import { ParsedFile } from "./autoblog"
 import { AutoblogConfig } from "./config"
 import * as files from "./files"
 import format from "./format"
+import { extractMetaInfo, PostInfo, RouteInfo } from "./meta"
+import Templater from "./template"
 
 export const VUE_TEMPLATE = "template.vue"
 export const VUE_SCRIPT = "script.vue"
@@ -13,8 +16,7 @@ export const AUTO_POSTS = "auto-entries.js"
 export const AUTO_POSTS_TYPINGS = "auto-entries.d.ts"
 export const HANDLEBARS_EXT = ".hbs"
 
-export class VueTemplater {
-  private readonly isTypescript: boolean
+export class VueTemplater implements Templater {
   private readonly template: string
   private readonly script: string
   private readonly routes: string
@@ -23,7 +25,6 @@ export class VueTemplater {
   private readonly postTypings?: string
 
   constructor(
-    isTypescript: boolean,
     template: string,
     script: string,
     routes: string,
@@ -31,7 +32,6 @@ export class VueTemplater {
     routeTypings?: string,
     postTypings?: string,
   ) {
-    this.isTypescript = isTypescript
     this.template = template
     this.script = script
     this.routes = routes
@@ -40,7 +40,35 @@ export class VueTemplater {
     this.postTypings = postTypings
   }
 
-  public generateTemplate(entry: ParsedFile, config: AutoblogConfig): string {
+  public generate(entry: ParsedFile, config: AutoblogConfig): string {
+    const template = this.generateTemplate(entry, config)
+    const script = this.generateScript(entry, config)
+    return script ? `${template}\n<script>\n${script}</script>\n` : template
+  }
+
+  public generateRoutes(routes: RouteInfo[], config: AutoblogConfig): string {
+    const imports = routes.map(it => it.getImport()).join("\n")
+    const list = routes.map(it => it.toString()).join(",\n")
+    return format.formatScript(compileTemplate(this.routes, { imports, list }), config.prettierConfig)
+  }
+
+  public generatePosts(posts: PostInfo[], config: AutoblogConfig): string {
+    const entries = posts
+      .filter(it => Object.keys(it).length > 0)
+      .map(it => inspect(it))
+      .join(",\n")
+    return format.formatScript(compileTemplate(this.posts, { entries }), config.prettierConfig)
+  }
+
+  public generateRouteTypings(): string {
+    return this.routeTypings!
+  }
+
+  public generatePostTypings(): string {
+    return this.postTypings!
+  }
+
+  private generateTemplate(entry: ParsedFile, config: AutoblogConfig): string {
     // clear extra new-line at end of rendered HTML
     const html = entry.html.endsWith("\n") ? entry.html.substring(0, entry.html.length - 1) : entry.html
 
@@ -54,22 +82,34 @@ export class VueTemplater {
       ? `id="${format.pascalToKebab(id)}" class="${classNames}"`
       : `id="${format.pascalToKebab(id)}"`
 
-    const templatedHtml = format.formatHtml(compileTemplate(this.template, {
-      attr,
-      content: html,
-    }), config.prettierConfig)
-
-    // output meta-info from frontmatter
-    if (config.vue && config.vue.outputMeta && entry.markdown.frontMatter) {
-      // TODO: implement meta
-      return templatedHtml
-    }
+    const templatedHtml = format.formatHtml(
+      compileTemplate(this.template, {
+        attr,
+        content: html,
+      }),
+      config.prettierConfig,
+    )
     return templatedHtml
+  }
+
+  private generateScript(entry: ParsedFile, config: AutoblogConfig): string | null {
+    // output meta-info from markdown front-matter
+    if (config.vue && config.vue.outputMeta && entry.markdown.frontMatter) {
+      const metaInfo = extractMetaInfo(entry.markdown.frontMatter)
+      if (Object.keys(metaInfo).length > 0) {
+        const templatedScript = format.formatScript(
+          compileTemplate(this.script, { metaInfo: inspect(metaInfo) }),
+          config.prettierConfig,
+        )
+        return templatedScript
+      }
+    }
+    return null
   }
 }
 
 export async function templater(isTypescript: boolean): Promise<VueTemplater> {
-  const rootPath = path.resolve(__dirname, "../../../", "src", "templates", "vue")
+  const rootPath = path.resolve(__dirname, "templates", "vue")
 
   const template = await files.readFile(path.resolve(rootPath, VUE_TEMPLATE + HANDLEBARS_EXT), files.UTF8)
   const script = await files.readFile(path.resolve(rootPath, VUE_SCRIPT + HANDLEBARS_EXT), files.UTF8)
@@ -79,9 +119,9 @@ export async function templater(isTypescript: boolean): Promise<VueTemplater> {
   if (isTypescript) {
     const routeTypings = await files.readFile(path.resolve(rootPath, AUTO_ROUTES_TYPINGS), files.UTF8)
     const postTypings = await files.readFile(path.resolve(rootPath, AUTO_POSTS_TYPINGS), files.UTF8)
-    return new VueTemplater(isTypescript, template, script, routes, posts, routeTypings, postTypings)
+    return new VueTemplater(template, script, routes, posts, routeTypings, postTypings)
   }
-  return new VueTemplater(isTypescript, template, script, routes, posts)
+  return new VueTemplater(template, script, routes, posts)
 }
 
 function compileTemplate(content: string, context: any): string {

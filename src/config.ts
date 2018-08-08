@@ -1,11 +1,14 @@
-import * as fs from "fs"
-import * as markdownit from "markdown-it"
 import * as path from "path"
 import * as prettier from "prettier"
+import * as files from "./files"
 
 const outputTypes = {
   html: true,
   vue: true,
+}
+
+interface VueOptions {
+  outputMeta: boolean
 }
 
 interface DirectoryOptions {
@@ -13,11 +16,36 @@ interface DirectoryOptions {
   outputFolder: string
 }
 
-interface VueOptions {
-  outputMeta: boolean
+export class AutoblogConfig implements Config {
+  public readonly markdownit: markdownit.Options
+  public readonly directory: DirectoryOptions
+  public readonly defaultStyle?: string
+  public readonly outputType: string
+  public readonly typescript: boolean
+  public readonly vue: VueOptions
+
+  public readonly prettierConfig: prettier.Options
+
+  constructor(
+    markdownit: markdownit.Options,
+    directory: DirectoryOptions,
+    defaultStyle: string | undefined,
+    outputType: string,
+    typescript: boolean,
+    vue: VueOptions,
+    prettierConfig: prettier.Options,
+  ) {
+    this.markdownit = markdownit
+    this.directory = directory
+    this.defaultStyle = defaultStyle
+    this.outputType = outputType
+    this.typescript = typescript
+    this.vue = vue
+    this.prettierConfig = prettierConfig
+  }
 }
 
-interface IConfig {
+export interface Config {
   // markdown-it options
   markdownit: markdownit.Options
 
@@ -37,56 +65,45 @@ interface IConfig {
   vue?: VueOptions
 }
 
-class Config implements IConfig {
-  public static load(): Config {
-    return new Config()
+export async function loadConfig(configPath: string): Promise<AutoblogConfig> {
+  const configFile = await files.readFile(configPath, files.UTF8)
+  const json = JSON.parse(configFile)
+
+  const prettierConfig = (await prettier.resolveConfig(path.resolve(configPath))) || {}
+  if (!prettierConfig.parser) {
+    prettierConfig.parser = "babylon"
   }
 
-  public readonly markdownit: markdownit.Options
-  public readonly directory: DirectoryOptions
-  public readonly defaultStyle?: string
-  public readonly outputType: string
-  public readonly vue?: VueOptions
-  public readonly typescript?: boolean
-  public readonly prettierConfig: prettier.Options
+  const config: AutoblogConfig = new AutoblogConfig(
+    json.markdownit || {
+      linkify: true,
+      typographer: true,
+      xhtmlOut: true,
+    },
+    json.directory || {
+      inputFolder: "src/md/",
+      outputFolder: "src/autoblog/",
+    },
+    json.defaultStyle,
+    json.outputType || "vue",
+    json.typescript || false,
+    json.vue || {
+      outputMeta: true,
+    },
+    prettierConfig,
+  )
 
-  private constructor() {
-    const configJson = fs.readFileSync(path.resolve(".", ".autoblog.json"), "utf8")
-    const configContent = JSON.parse(configJson) as IConfig
-
-    this.directory = configContent.directory
-    this.markdownit = configContent.markdownit
-    this.outputType = configContent.outputType
-    this.defaultStyle = configContent.defaultStyle
-    this.typescript = configContent.typescript
-    this.vue = configContent.vue
-    this.prettierConfig = prettier.resolveConfig.sync(path.resolve(".", ".package.json")) || {}
-    this.prettierConfig.parser = "babylon"
-
-    if (!this.validate()) {
-      throw new Error("failed to validate config.")
-    }
+  // validate config
+  if (!(config.outputType in outputTypes)) {
+    throw new Error("ERROR: Unsupported outputType in config!")
+  }
+  // check if input exists
+  const inputFolderExists = await files.exists(config.directory.inputFolder)
+  if (!inputFolderExists) {
+    throw new Error(
+      `ERROR: Failed to read input folder "${config.directory.inputFolder}". Make sure this directory exists!`,
+    )
   }
 
-  private validate(): boolean {
-    if (!(this.outputType in outputTypes)) {
-      console.error(`ERROR: Unsupported outputType in config`)
-      return false
-    }
-
-    // validate input dir exists
-    const inputExists = fs.existsSync(this.directory.inputFolder)
-    if (!inputExists) {
-      console.error(
-        `Failed to read input folder "${
-          this.directory.inputFolder
-        }". Make sure this directory exists!`,
-      )
-      return false
-    }
-    return true
-  }
+  return config
 }
-
-const config = Config.load()
-export default config

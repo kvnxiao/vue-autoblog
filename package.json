@@ -1,6 +1,6 @@
 {
   "name": "vue-autoblog",
-  "version": "0.1.4",
+  "version": "0.1.6",
   "description": "A compile-time tool to generate Vue template files (*.vue) from markdown files (*.md)",
   "main": "src/ts-out/main.js",
   "repository": "https://github.com/kvnxiao/vue-autoblog",
@@ -38,7 +38,7 @@
   "scripts": {
     "clean": "rimraf build .nyc_output coverage",
     "build": "yarn run clean && tsc",
-    "test": "yarn run build && nyc ava build/test/",
+    "test": "yarn run build && nyc ava",
     "lint": "tslint src/**/*.ts test/**/*.ts"
   },
   "nyc": {
@@ -47,7 +47,7 @@
     ],
     "include": [
       "src/**.ts",
-      "build/src/**.js"
+      "src/**.js"
     ],
     "exclude": [
       "**/*.d.ts",
