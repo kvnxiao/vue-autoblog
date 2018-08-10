@@ -1,6 +1,6 @@
 ---
 title: Another Test Post
-
+layout: post
 metaInfo:
   title: Another Test Post Title Overriden
   data2: something

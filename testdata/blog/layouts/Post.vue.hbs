@@ -1,6 +1,14 @@
 <template>
-  <div id="{{ post.name }}">
-    <h1>{{ post.name }}</h1>
-      {{{ content }}}
+  <div id="{{ post.id }}" class="{{ style }}">
+    <h1>{{ post.id }}</h1>
+    {{{ content }}}
+    <div>
+      {{#if post.prev}}
+      <p>Previous post: {{ post.prev.id }}</p>
+      {{/if}}
+      {{#if post.next}}
+      <p>Next post: {{ post.next.id }}</p>
+      {{/if}}
+    </div>
   </div>
 </template>

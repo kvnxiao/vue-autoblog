@@ -1,12 +1,10 @@
 import * as handlebars from "handlebars"
 import * as path from "path"
 import { inspect } from "util"
-import { ParsedFile } from "./autoblog"
 import { AutoblogConfig } from "./config"
 import * as files from "./files"
 import format from "./format"
-import { extractMetaInfo, MetaInfo, PostInfo, RouteInfo } from "./meta"
-import Templater from "./template"
+import { Metadata, ParsedVueFile } from "./vue"
 
 export const VUE_TEMPLATE = "template.vue"
 export const VUE_SCRIPT = "script.vue"
@@ -21,7 +19,12 @@ interface Layout {
   [key: string]: string
 }
 
-export class VueTemplater implements Templater {
+interface PrevNext {
+  prev?: Metadata
+  next?: Metadata
+}
+
+export class VueTemplater {
   private readonly template: string
   private readonly script: string
   private readonly routes: string
@@ -51,26 +54,27 @@ export class VueTemplater implements Templater {
     this.postTypings = postTypings
   }
 
-  public generate(entry: ParsedFile): string {
-    const metaInfo = extractMetaInfo(entry.markdown.frontMatter)
-    const template = this.generateTemplate(entry, metaInfo)
-    const script = this.generateScript(entry, metaInfo)
-    return script ? `${template}\n<script>\n${script}</script>\n` : template
+  public generate(entry: ParsedVueFile, options?: any): string {
+    const prevnext = options as PrevNext
+    const template = this.generateTemplate(entry, prevnext)
+    const script = this.generateScript(entry)
+    const content = script ? `${template}\n<script>\n${script}</script>\n` : template
+    return content
   }
 
-  public generateRoutes(routes: RouteInfo[]): string {
-    const imports = routes.map(it => it.getImport()).join("\n")
-    const list = routes.map(it => it.toString()).join(",\n")
-    return format.formatScript(compileTemplate(this.routes, { imports, list }), this.config.prettierConfig)
-  }
+  // public generateRoutes(routes: RouteInfo[]): string {
+  //   const imports = routes.map(it => it.getImport()).join("\n")
+  //   const list = routes.map(it => it.toString()).join(",\n")
+  //   return format.formatScript(compileTemplate(this.routes, { imports, list }), this.config.prettierConfig)
+  // }
 
-  public generatePosts(posts: PostInfo[]): string {
-    const entries = posts
-      .filter(it => Object.keys(it).length > 0)
-      .map(it => inspect(it))
-      .join(",\n")
-    return format.formatScript(compileTemplate(this.posts, { entries }), this.config.prettierConfig)
-  }
+  // public generatePosts(posts: PostInfo[]): string {
+  //   const entries = posts
+  //     .filter(it => Object.keys(it).length > 0)
+  //     .map(it => inspect(it))
+  //     .join(",\n")
+  //   return format.formatScript(compileTemplate(this.posts, { entries }), this.config.prettierConfig)
+  // }
 
   public generateRouteTypings(): string {
     return this.routeTypings!
@@ -80,26 +84,35 @@ export class VueTemplater implements Templater {
     return this.postTypings!
   }
 
-  private generateTemplate(entry: ParsedFile, metaInfo: MetaInfo): string {
+  private generateTemplate(entry: ParsedVueFile, prevnext?: PrevNext): string {
+    const metadata = entry.metadata
     // clear extra new-line at end of rendered HTML
     const html = entry.html.endsWith("\n") ? entry.html.substring(0, entry.html.length - 1) : entry.html
 
-    const name = format.pascalToKebab(entry.output.name)
+    const style = metadata.style || this.config.defaultStyle
 
-    if (metaInfo.layout && this.layouts[metaInfo.layout]) {
-      const layout = this.layouts[metaInfo.layout]
+    // get custom layout, if exists
+    if (metadata.layout && this.layouts[metadata.layout]) {
+      const layout = this.layouts[metadata.layout]
       return format.formatHtml(
         compileTemplate(layout, {
           content: html,
           post: {
-            name,
+            id: metadata.id,
+            title: metadata.title,
+            permalink: metadata.permalink,
+            description: metadata.description,
+            categories: metadata.categories,
+            tags: metadata.tags,
+            prev: prevnext ? prevnext.prev : undefined,
+            next: prevnext ? prevnext.next : undefined,
           },
+          style,
         }),
         this.config.prettierConfig,
       )
     } else {
-      const classNames = metaInfo.style || this.config.defaultStyle
-      const attr = classNames ? `id="${name}" class="${classNames}"` : `id="${name}"`
+      const attr = style ? `id="${metadata.id}" class="${style}"` : `id="${metadata.id}"`
 
       return format.formatHtml(
         compileTemplate(this.template, {
@@ -111,12 +124,12 @@ export class VueTemplater implements Templater {
     }
   }
 
-  private generateScript(entry: ParsedFile, metaInfo: MetaInfo): string | null {
+  private generateScript(entry: ParsedVueFile): string | null {
     // output meta-info from markdown front-matter
-    if (this.config.vue && this.config.vue.outputMeta && entry.markdown.frontMatter) {
-      if (Object.keys(metaInfo).length > 0) {
+    if (this.config.vue && this.config.vue.outputMeta && entry.metadata.metaInfo) {
+      if (Object.keys(entry.metadata.metaInfo).length > 0) {
         const templatedScript = format.formatScript(
-          compileTemplate(this.script, { metaInfo: inspect(metaInfo) }),
+          compileTemplate(this.script, { metaInfo: inspect(entry.metadata.metaInfo) }),
           this.config.prettierConfig,
         )
         return templatedScript
@@ -126,7 +139,7 @@ export class VueTemplater implements Templater {
   }
 }
 
-export async function templater(config: AutoblogConfig): Promise<VueTemplater> {
+export async function NewTemplater(config: AutoblogConfig): Promise<VueTemplater> {
   const rootPath = path.resolve(__dirname, "templates", "vue")
 
   const template = await files.readFile(path.resolve(rootPath, VUE_TEMPLATE + HANDLEBARS_EXT), files.UTF8)

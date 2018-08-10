@@ -4,8 +4,8 @@ import * as cfg from "./config"
 import FileInfo from "./file"
 import * as files from "./files"
 import readMarkdown, { MarkdownFile } from "./md"
-import { parseInfo } from "./meta"
-import * as vue from "./vue-templater"
+import * as vue from "./vue"
+import * as vuetemplater from "./vue-templater"
 
 export interface ParsedFile {
   input: FileInfo
@@ -56,50 +56,64 @@ export async function generate(config: cfg.AutoblogConfig) {
 }
 
 async function generateVue(entries: ParsedFile[], config: cfg.AutoblogConfig) {
-  const templater = await vue.templater(config)
+  const templater = await vuetemplater.NewTemplater(config)
 
-  // write .vue templates
-  const writeFiles = entries.map(async it => {
-    const vueTemplate = templater.generate(it)
-    return files.writeFile(it.output.fullPath, vueTemplate, files.UTF8)
-  })
-  Promise.all(writeFiles).then(_ => {
-    console.log(`Completed generating .vue files in "${config.directory.outputFolder}"`)
-  })
+  const vueEntries = entries.map(it => vue.parse(it, config.directory.outputFolder))
+  const vueEntriesWithoutDates = vueEntries.filter(it => !it.metadata.date)
+  const vueEntriesWithDates = vueEntries.filter(it => it.metadata.date).sort(it => it.metadata.date!.getTime())
 
-  const entryInfos = entries.map(it => parseInfo(it, config.directory.outputFolder))
+  // write .vue files
+  for (let i = 0; i < vueEntriesWithDates.length; i++) {
+    const curr = vueEntriesWithDates[i]
+    const prev = i - 1 >= 0 ? vueEntriesWithDates[i - 1].metadata : undefined
+    const next = i + 1 < vueEntriesWithDates.length ? vueEntriesWithDates[i + 1].metadata : undefined
+    const vueTemplate = templater.generate(curr, { prev, next })
+    files.writeFile(curr.output.fullPath, vueTemplate, files.UTF8).then(_ => {
+      console.log(`Completed generating "${curr.output.fullPath}"`)
+    })
+  }
+  for (const entry of vueEntriesWithoutDates) {
+    const vueTemplate = templater.generate(entry)
+    files.writeFile(entry.output.fullPath, vueTemplate, files.UTF8).then(_ => {
+      console.log(`Completed generating "${entry.output.fullPath}"`)
+    })
+  }
 
-  // get routes
-  const routesPath = path.join(config.directory.outputFolder, vue.AUTO_ROUTES)
-  const routes = templater.generateRoutes(entryInfos.map(it => it.routeInfo))
-  files.writeFile(routesPath, routes, files.UTF8).then(_ => {
-    console.log(`Completed generating "${routesPath}"`)
-  })
+  // // get routes
+  // const routesPath = path.join(config.directory.outputFolder, vue.AUTO_ROUTES)
+  // const routes = templater.generateRoutes(entryInfos.map(it => it.routeInfo))
+  // files.writeFile(routesPath, routes, files.UTF8).then(_ => {
+  //   console.log(`Completed generating "${routesPath}"`)
+  // })
 
-  // get posts info
-  const postsPath = path.join(config.directory.outputFolder, vue.AUTO_POSTS)
-  const posts = templater.generatePosts(entryInfos.map(it => it.postInfo))
-  files.writeFile(postsPath, posts, files.UTF8).then(_ => {
-    console.log(`Completed generating "${postsPath}"`)
-  })
+  // // get posts info
+  // const postsPath = path.join(config.directory.outputFolder, vue.AUTO_POSTS)
+  // const posts = templater.generatePosts(entryInfos.map(it => it.postInfo))
+  // files.writeFile(postsPath, posts, files.UTF8).then(_ => {
+  //   console.log(`Completed generating "${postsPath}"`)
+  // })
 
   if (config.typescript) {
-    const routeTypings = path.join(config.directory.outputFolder, vue.AUTO_ROUTES_TYPINGS)
-    if (!await files.exists(routeTypings)) {
-      files.writeFile(routeTypings, templater.generateRouteTypings(), files.UTF8).then(_ => {
-        console.log(`Completed generating "${routeTypings}"`)
-      })
-    } else {
-      console.log(`File "${routeTypings}" already exists, skipping write.`)
-    }
+    generateVueTypings(templater, config)
+  }
+}
 
-    const postTypings = path.join(config.directory.outputFolder, vue.AUTO_POSTS_TYPINGS)
-    if (!await files.exists(postTypings)) {
-      files.writeFile(postTypings, templater.generatePostTypings(), files.UTF8).then(_ => {
-        console.log(`Completed generating "${postTypings}"`)
-      })
-    } else {
-      console.log(`File "${postTypings}" already exists, skipping write.`)
-    }
+async function generateVueTypings(templater: vuetemplater.VueTemplater, config: cfg.AutoblogConfig) {
+  const routeTypings = path.join(config.directory.outputFolder, vuetemplater.AUTO_ROUTES_TYPINGS)
+  if (!(await files.exists(routeTypings))) {
+    files.writeFile(routeTypings, templater.generateRouteTypings(), files.UTF8).then(_ => {
+      console.log(`Completed generating "${routeTypings}"`)
+    })
+  } else {
+    console.log(`File "${routeTypings}" already exists, skipping write.`)
+  }
+
+  const postTypings = path.join(config.directory.outputFolder, vuetemplater.AUTO_POSTS_TYPINGS)
+  if (!(await files.exists(postTypings))) {
+    files.writeFile(postTypings, templater.generatePostTypings(), files.UTF8).then(_ => {
+      console.log(`Completed generating "${postTypings}"`)
+    })
+  } else {
+    console.log(`File "${postTypings}" already exists, skipping write.`)
   }
 }

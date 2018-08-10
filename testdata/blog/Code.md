@@ -1,6 +1,7 @@
 ---
 style: null
 layout: post
+date: 2018-08-02
 ---
 
 ```xml
