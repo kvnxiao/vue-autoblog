@@ -1,5 +1,6 @@
 ---
 style: null
+layout: post
 ---
 
 ```xml

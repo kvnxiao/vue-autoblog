@@ -15,6 +15,10 @@ export interface PostInfo {
   path?: string
 }
 
+export interface MetaInfo {
+  [key: string]: any
+}
+
 export class RouteInfo {
   public readonly path: string
   public readonly name: string
@@ -37,12 +41,20 @@ export class RouteInfo {
   }
 }
 
-export function extractMetaInfo(frontMatter?: any): any {
+export function extractMetaInfo(frontMatter?: any): { [key: string]: any } {
   // extract root-level title and place inside meta obj
   const metaInfo = frontMatter.metaInfo || {}
   // prefer to use meta-info's title over default root-level title
   if (frontMatter.title && !metaInfo.title) {
     metaInfo.title = frontMatter.title
+  }
+
+  if (frontMatter.style) {
+    metaInfo.style = frontMatter.style
+  }
+
+  if (frontMatter.layout) {
+    metaInfo.layout = frontMatter.layout
   }
   return metaInfo
 }

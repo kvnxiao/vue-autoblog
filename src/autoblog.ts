@@ -22,8 +22,10 @@ export async function generate(config: cfg.AutoblogConfig) {
   await files.mkdirp(config.directory.outputFolder)
 
   for (const dir of dirInfo.directories) {
-    const outDir = files.replaceDir(dir, config.directory.inputFolder, config.directory.outputFolder)
-    await files.mkdirp(outDir)
+    if (!dir.endsWith("/layouts")) {
+      const outDir = files.replaceDir(dir, config.directory.inputFolder, config.directory.outputFolder)
+      await files.mkdirp(outDir)
+    }
   }
 
   const mdparser = new markdownit(config.markdownit)
@@ -54,11 +56,11 @@ export async function generate(config: cfg.AutoblogConfig) {
 }
 
 async function generateVue(entries: ParsedFile[], config: cfg.AutoblogConfig) {
-  const templater = await vue.templater(config.typescript)
+  const templater = await vue.templater(config)
 
   // write .vue templates
   const writeFiles = entries.map(async it => {
-    const vueTemplate = templater.generate(it, config)
+    const vueTemplate = templater.generate(it)
     return files.writeFile(it.output.fullPath, vueTemplate, files.UTF8)
   })
   Promise.all(writeFiles).then(_ => {
@@ -69,14 +71,14 @@ async function generateVue(entries: ParsedFile[], config: cfg.AutoblogConfig) {
 
   // get routes
   const routesPath = path.join(config.directory.outputFolder, vue.AUTO_ROUTES)
-  const routes = templater.generateRoutes(entryInfos.map(it => it.routeInfo), config)
+  const routes = templater.generateRoutes(entryInfos.map(it => it.routeInfo))
   files.writeFile(routesPath, routes, files.UTF8).then(_ => {
     console.log(`Completed generating "${routesPath}"`)
   })
 
   // get posts info
   const postsPath = path.join(config.directory.outputFolder, vue.AUTO_POSTS)
-  const posts = templater.generatePosts(entryInfos.map(it => it.postInfo), config)
+  const posts = templater.generatePosts(entryInfos.map(it => it.postInfo))
   files.writeFile(postsPath, posts, files.UTF8).then(_ => {
     console.log(`Completed generating "${postsPath}"`)
   })
