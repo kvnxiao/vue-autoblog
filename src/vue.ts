@@ -24,6 +24,16 @@ export interface Metadata {
   tags?: string[]
 }
 
+export interface PostEntry {
+  title?: string
+  id: string
+  permalink: string
+  description?: string
+  date?: string
+  categories?: string[]
+  tags?: string[]
+}
+
 export interface VueMetaInfo {
   title?: string
   titleTemplate?: string

@@ -4,7 +4,7 @@ import { inspect } from "util"
 import { AutoblogConfig } from "./config"
 import * as files from "./files"
 import format from "./format"
-import { Metadata, ParsedVueFile } from "./vue"
+import { Metadata, ParsedVueFile, PostEntry, RouteEntry } from "./vue"
 
 export const VUE_TEMPLATE = "template.vue"
 export const VUE_SCRIPT = "script.vue"
@@ -62,19 +62,19 @@ export class VueTemplater {
     return content
   }
 
-  // public generateRoutes(routes: RouteInfo[]): string {
-  //   const imports = routes.map(it => it.getImport()).join("\n")
-  //   const list = routes.map(it => it.toString()).join(",\n")
-  //   return format.formatScript(compileTemplate(this.routes, { imports, list }), this.config.prettierConfig)
-  // }
+  public generateRoutes(routes: RouteEntry[]): string {
+    const imports = routes.map(it => it.getImport()).join("\n")
+    const list = routes.map(it => it.toString()).join(",\n")
+    return format.formatScript(compileTemplate(this.routes, { imports, list }), this.config.prettierConfig)
+  }
 
-  // public generatePosts(posts: PostInfo[]): string {
-  //   const entries = posts
-  //     .filter(it => Object.keys(it).length > 0)
-  //     .map(it => inspect(it))
-  //     .join(",\n")
-  //   return format.formatScript(compileTemplate(this.posts, { entries }), this.config.prettierConfig)
-  // }
+  public generatePosts(posts: PostEntry[]): string {
+    const entries = posts
+      .filter(it => Object.keys(it).length > 0)
+      .map(it => inspect(it))
+      .join(",\n")
+    return format.formatScript(compileTemplate(this.posts, { entries }), this.config.prettierConfig)
+  }
 
   public generateRouteTypings(): string {
     return this.routeTypings!
@@ -183,4 +183,28 @@ async function loadLayouts(inputFolder: string): Promise<Layout> {
 
 function compileTemplate(content: string, context: any): string {
   return handlebars.compile(content)(context)
+}
+
+export function extractPostEntries(it: ParsedVueFile): PostEntry {
+  const metadata = it.metadata
+  const postEntry: PostEntry = {
+    id: metadata.id,
+    permalink: metadata.permalink,
+  }
+  if (metadata.title) {
+    postEntry.title = metadata.title
+  }
+  if (metadata.description) {
+    postEntry.description = metadata.description
+  }
+  if (metadata.date) {
+    postEntry.date = metadata.date.toString()
+  }
+  if (metadata.categories) {
+    postEntry.tags = metadata.categories
+  }
+  if (metadata.tags) {
+    postEntry.tags = metadata.tags
+  }
+  return postEntry
 }

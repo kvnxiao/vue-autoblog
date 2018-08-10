@@ -79,19 +79,24 @@ async function generateVue(entries: ParsedFile[], config: cfg.AutoblogConfig) {
     })
   }
 
-  // // get routes
-  // const routesPath = path.join(config.directory.outputFolder, vue.AUTO_ROUTES)
-  // const routes = templater.generateRoutes(entryInfos.map(it => it.routeInfo))
-  // files.writeFile(routesPath, routes, files.UTF8).then(_ => {
-  //   console.log(`Completed generating "${routesPath}"`)
-  // })
+  // get routes
+  const routesPath = path.join(config.directory.outputFolder, vuetemplater.AUTO_ROUTES)
+  const routes = templater.generateRoutes(vueEntries.map(it => it.routeEntry))
+  files.writeFile(routesPath, routes, files.UTF8).then(_ => {
+    console.log(`Completed generating "${routesPath}"`)
+  })
 
-  // // get posts info
-  // const postsPath = path.join(config.directory.outputFolder, vue.AUTO_POSTS)
-  // const posts = templater.generatePosts(entryInfos.map(it => it.postInfo))
-  // files.writeFile(postsPath, posts, files.UTF8).then(_ => {
-  //   console.log(`Completed generating "${postsPath}"`)
-  // })
+  // get posts info
+  const postsPath = path.join(config.directory.outputFolder, vuetemplater.AUTO_POSTS)
+  const posts = templater.generatePosts(
+    // output undated posts before dated posts
+    vueEntriesWithoutDates
+      .map(vuetemplater.extractPostEntries)
+      .concat(vueEntriesWithDates.map(vuetemplater.extractPostEntries)),
+  )
+  files.writeFile(postsPath, posts, files.UTF8).then(_ => {
+    console.log(`Completed generating "${postsPath}"`)
+  })
 
   if (config.typescript) {
     generateVueTypings(templater, config)

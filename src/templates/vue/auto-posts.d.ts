@@ -1,11 +1,12 @@
-interface Entries {
+interface Posts {
+  title?: string
+  id: string
+  permalink: string
   description?: string
   date?: string
-  title?: string
   categories?: string[]
   tags?: string[]
-  path: string
 }
 
-declare const entries: Entries[];
-export default entries;
+declare const posts: Posts[];
+export default posts;
