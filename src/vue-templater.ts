@@ -68,6 +68,11 @@ export class VueTemplater {
     return format.formatScript(compileTemplate(this.routes, { imports, list }), this.config.prettierConfig)
   }
 
+  public generatePrerenderRoutes(routes: RouteEntry[]): string {
+    const prerenderRoutes = routes.map(it => `"${it.path}"`).join(", ")
+    return `export default [${prerenderRoutes}];`
+  }
+
   public generatePosts(posts: PostEntry[]): string {
     const entries = posts
       .filter(it => Object.keys(it).length > 0)

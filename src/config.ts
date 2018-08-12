@@ -9,6 +9,7 @@ const outputTypes = {
 
 interface VueOptions {
   outputMeta: boolean
+  prerender: boolean
 }
 
 interface DirectoryOptions {
@@ -89,6 +90,7 @@ export async function loadConfig(configPath: string): Promise<AutoblogConfig> {
     json.typescript || false,
     json.vue || {
       outputMeta: true,
+      prerender: false,
     },
     prettierConfig,
   )

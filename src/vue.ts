@@ -14,6 +14,7 @@ export interface Metadata {
   metaInfo?: VueMetaInfo
   style?: string
   layout?: string
+  isComponent: boolean
 
   // post info
   id: string
@@ -71,6 +72,7 @@ export class RouteEntry {
 
 function extractMetadata(id: string, outputFolder: string, rootOutputFolder: string, frontMatter?: any): Metadata {
   const metadata: Metadata = {
+    isComponent: frontMatter.isComponent || false,
     id,
     permalink: getPermalink(id, outputFolder, rootOutputFolder, frontMatter ? frontMatter.permalink : undefined),
   }

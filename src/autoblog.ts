@@ -59,8 +59,19 @@ async function generateVue(entries: ParsedFile[], config: cfg.AutoblogConfig) {
   const templater = await vuetemplater.NewTemplater(config)
 
   const vueEntries = entries.map(it => vue.parse(it, config.directory.outputFolder))
-  const vueEntriesWithoutDates = vueEntries.filter(it => !it.metadata.date)
-  const vueEntriesWithDates = vueEntries.filter(it => it.metadata.date).sort(it => it.metadata.date!.getTime())
+
+  const vueEntriesComponents: vue.ParsedVueFile[] = []
+  const vueEntriesViews: vue.ParsedVueFile[] = []
+  for (const entry of vueEntries) {
+    if (entry.metadata.isComponent) {
+      vueEntriesComponents.push(entry)
+    } else {
+      vueEntriesViews.push(entry)
+    }
+  }
+
+  const vueEntriesWithoutDates = vueEntriesViews.filter(it => !it.metadata.date)
+  const vueEntriesWithDates = vueEntriesViews.filter(it => it.metadata.date).sort(it => it.metadata.date!.getTime())
 
   // write .vue files
   for (let i = 0; i < vueEntriesWithDates.length; i++) {
@@ -78,10 +89,16 @@ async function generateVue(entries: ParsedFile[], config: cfg.AutoblogConfig) {
       console.log(`Completed generating "${entry.output.fullPath}"`)
     })
   }
+  for (const entry of vueEntriesComponents) {
+    const vueTemplate = templater.generate(entry)
+    files.writeFile(entry.output.fullPath, vueTemplate, files.UTF8).then(_ => {
+      console.log(`Completed generating "${entry.output.fullPath}"`)
+    })
+  }
 
   // get routes
   const routesPath = path.join(config.directory.outputFolder, vuetemplater.AUTO_ROUTES)
-  const routes = templater.generateRoutes(vueEntries.map(it => it.routeEntry))
+  const routes = templater.generateRoutes(vueEntriesViews.map(it => it.routeEntry))
   files.writeFile(routesPath, routes, files.UTF8).then(_ => {
     console.log(`Completed generating "${routesPath}"`)
   })
@@ -97,6 +114,13 @@ async function generateVue(entries: ParsedFile[], config: cfg.AutoblogConfig) {
   files.writeFile(postsPath, posts, files.UTF8).then(_ => {
     console.log(`Completed generating "${postsPath}"`)
   })
+
+  if (config.vue.prerender) {
+    const prerenderRoutes = templater.generatePrerenderRoutes(vueEntriesViews.map(it => it.routeEntry))
+    files.writeFile(path.resolve(".", "prerender-routes.js"), prerenderRoutes, files.UTF8).then(_ => {
+      console.log(`Completed generating prerendered routes in "prerender-routes.js"`)
+    })
+  }
 
   if (config.typescript) {
     generateVueTypings(templater, config)
