@@ -62,8 +62,8 @@ export class VueTemplater {
     return content
   }
 
-  public generateRoutes(routes: RouteEntry[]): string {
-    const imports = routes.map(it => it.getImport()).join("\n")
+  public generateRoutes(routes: RouteEntry[], lazyRoute: boolean): string {
+    const imports = routes.map(it => lazyRoute ? it.getLazyImport() : it.getImport()).join("\n")
     const list = routes.map(it => it.toString()).join(",\n")
     return format.formatScript(compileTemplate(this.routes, { imports, list }), this.config.prettierConfig)
   }
@@ -94,7 +94,7 @@ export class VueTemplater {
     // clear extra new-line at end of rendered HTML
     const html = entry.html.endsWith("\n") ? entry.html.substring(0, entry.html.length - 1) : entry.html
 
-    const style = metadata.style || this.config.defaultStyle
+    const style = metadata.style !== undefined ? metadata.style : this.config.defaultStyle || undefined
 
     // get custom layout, if exists
     if (metadata.layout && this.layouts[metadata.layout]) {
@@ -121,7 +121,7 @@ export class VueTemplater {
         this.config.prettierConfig,
       )
     } else {
-      const attr = style ? `id="${metadata.id}" class="${style}"` : `id="${metadata.id}"`
+      const attr = `id="${metadata.id}"${style !== null ? (style !== undefined ? ` class="${style}"` : "") : ""}`
 
       return format.formatHtml(
         compileTemplate(this.template, {

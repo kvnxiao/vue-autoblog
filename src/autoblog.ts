@@ -98,7 +98,7 @@ async function generateVue(entries: ParsedFile[], config: cfg.AutoblogConfig) {
 
   // get routes
   const routesPath = path.join(config.directory.outputFolder, vuetemplater.AUTO_ROUTES)
-  const routes = templater.generateRoutes(vueEntriesViews.map(it => it.routeEntry))
+  const routes = templater.generateRoutes(vueEntriesViews.map(it => it.routeEntry), config.vue.lazyRoutes)
   files.writeFile(routesPath, routes, files.UTF8).then(_ => {
     console.log(`Completed generating "${routesPath}"`)
   })

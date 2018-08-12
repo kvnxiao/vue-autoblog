@@ -1,5 +1,5 @@
 <template>
-  <div id="{{ post.id }}" class="{{ style }}">
+  <div id="{{ post.id }}"{{#if style}} class="{{ style }}"{{/if}}>
     <h1>{{ post.id }}</h1>
     {{#if post.dateFormatted}}
     <h2>{{ post.dateFormatted }}</h2>

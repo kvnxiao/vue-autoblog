@@ -79,6 +79,10 @@ export class RouteEntry {
   public getImport(): string {
     return `import ${this.componentName} from "${this.file}";`
   }
+
+  public getLazyImport(): string {
+    return `const ${this.componentName} = () => import(/* webpackChunkName: "${this.name}" */ "${this.file}");`
+  }
 }
 
 function extractMetadata(id: string, outputFolder: string, rootOutputFolder: string, frontMatter?: any): Metadata {
@@ -93,7 +97,7 @@ function extractMetadata(id: string, outputFolder: string, rootOutputFolder: str
       metadata.metaInfo = frontMatter.metaInfo
     }
     // set post specific style, if it exists
-    if (frontMatter.style) {
+    if (frontMatter.style !== undefined) {
       metadata.style = frontMatter.style
     }
     // set post specific layout, if it exists
