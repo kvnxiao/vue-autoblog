@@ -1,3 +1,4 @@
+import * as moment from "moment"
 import { ParsedFile } from "./autoblog"
 import FileInfo from "./file"
 import format from "./format"
@@ -7,6 +8,11 @@ export interface ParsedVueFile {
   output: FileInfo
   metadata: Metadata
   routeEntry: RouteEntry
+}
+
+interface Author {
+  firstName: string
+  lastName: string
 }
 
 export interface Metadata {
@@ -23,6 +29,11 @@ export interface Metadata {
   date?: Date
   categories?: string[]
   tags?: string[]
+  author?: Author
+  dateFormatted?: string
+
+  // extra info
+  extra?: any
 }
 
 export interface PostEntry {
@@ -72,8 +83,8 @@ export class RouteEntry {
 
 function extractMetadata(id: string, outputFolder: string, rootOutputFolder: string, frontMatter?: any): Metadata {
   const metadata: Metadata = {
-    isComponent: frontMatter.isComponent || false,
     id,
+    isComponent: frontMatter.isComponent || false,
     permalink: getPermalink(id, outputFolder, rootOutputFolder, frontMatter ? frontMatter.permalink : undefined),
   }
   if (frontMatter) {
@@ -111,6 +122,20 @@ function extractMetadata(id: string, outputFolder: string, rootOutputFolder: str
     }
     if (frontMatter.tags) {
       metadata.tags = frontMatter.tags
+    }
+    if (frontMatter.author) {
+      metadata.author = frontMatter.author
+    }
+
+    // date formatting
+    if (frontMatter.date && frontMatter.dateFormat) {
+      const dateFormat: string = frontMatter.dateFormat
+      metadata.dateFormatted = moment(frontMatter.date).format(dateFormat)
+    }
+
+    // extra info
+    if (frontMatter.extra) {
+      metadata.extra = frontMatter.extra
     }
   }
   return metadata

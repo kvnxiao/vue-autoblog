@@ -1,6 +1,9 @@
 <template>
   <div id="{{ post.id }}" class="{{ style }}">
     <h1>{{ post.id }}</h1>
+    {{#if post.dateFormatted}}
+    <h2>{{ post.dateFormatted }}</h2>
+    {{/if}}
     {{{ content }}}
     <div>
       {{#if post.prev}}

@@ -70,7 +70,7 @@ export class VueTemplater {
 
   public generatePrerenderRoutes(routes: RouteEntry[]): string {
     const prerenderRoutes = routes.map(it => `"${it.path}"`).join(", ")
-    return `export default [${prerenderRoutes}];`
+    return `module.exports = [${prerenderRoutes}];\n`
   }
 
   public generatePosts(posts: PostEntry[]): string {
@@ -109,8 +109,12 @@ export class VueTemplater {
             description: metadata.description,
             categories: metadata.categories,
             tags: metadata.tags,
+            author: metadata.author,
+            date: metadata.date ? metadata.date.getTime() : undefined,
+            dateFormatted: metadata.dateFormatted,
             prev: prevnext ? prevnext.prev : undefined,
             next: prevnext ? prevnext.next : undefined,
+            extra: metadata.extra,
           },
           style,
         }),
