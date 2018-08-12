@@ -36,7 +36,7 @@
     "source-map-support": "^0.5.6"
   },
   "scripts": {
-    "clean": "rimraf build .nyc_output coverage",
+    "clean": "rimraf build .nyc_output coverage src/**/*.js src/**/*.js.map",
     "build": "yarn run clean && tsc",
     "test": "yarn run build && nyc ava",
     "lint": "tslint src/**/*.ts test/**/*.ts"
