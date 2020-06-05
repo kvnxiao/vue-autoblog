@@ -3,6 +3,7 @@ import * as prettier from "prettier"
 
 const beautifyConfigHTML: HTMLBeautifyOptions = {
   end_with_newline: true,
+  /* eslint-disable prettier/prettier */
   unformatted: [
     // https://www.w3.org/TR/html5/dom.html#phrasing-content
     "a", "abbr", "area", "audio", "b", "bdi", "bdo", "br", "button", "canvas", "cite",
@@ -14,6 +15,7 @@ const beautifyConfigHTML: HTMLBeautifyOptions = {
     // prexisting - not sure of full effect of removing, leaving in
     "acronym", "address", "big", "dt", "ins", "strike", "tt",
   ],
+  /* eslint-enable prettier/prettier */
 }
 
 function formatHtml(html: string, prettierConfig: prettier.Options): string {
@@ -45,11 +47,9 @@ function isAlphaNumeric(str: string): boolean {
   let i = 0
   for (i = 0; i < len; i++) {
     const c = str.charCodeAt(i)
-    if (!(c > 47 && c < 58)
-      && !(c > 64 && c < 91)
-      && !(c > 96 && c < 123)) {
-        return false
-      }
+    if (!(c > 47 && c < 58) && !(c > 64 && c < 91) && !(c > 96 && c < 123)) {
+      return false
+    }
   }
   return true
 }

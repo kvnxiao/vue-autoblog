@@ -4,14 +4,13 @@ import * as files from "./files"
 interface FileInfoOptions {
   extension: string
   replaceDir?: {
-    startFrom: string,
-    to: string,
+    startFrom: string
+    to: string
   }
 }
 
 export default class FileInfo {
   public static of(fullPath: string): FileInfo {
-
     const periodIndex = fullPath.lastIndexOf(".")
     const lastSep = fullPath.lastIndexOf(path.sep)
     const extension = fullPath.substring(periodIndex + 1)

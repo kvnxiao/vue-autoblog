@@ -33,7 +33,29 @@ export interface Metadata {
   dateFormatted?: string
 
   // extra info
-  extra?: any
+  extra?: unknown
+}
+
+export interface FrontmatterMetadata {
+  title?: string
+  metaInfo?: VueMetaInfo
+  style?: string
+  layout?: string
+  isComponent: boolean
+
+  // post info
+  id: string
+  permalink: string
+  description?: string
+  date?: Date
+  categories?: string[]
+  tags?: string[]
+  author?: Author
+  dateFormat?: string
+  dateFormatted?: string
+
+  // extra info
+  extra?: unknown
 }
 
 export interface PostEntry {
@@ -49,14 +71,14 @@ export interface PostEntry {
 export interface VueMetaInfo {
   title?: string
   titleTemplate?: string
-  htmlAttrs?: object
-  bodyAttrs?: object
-  base?: object
-  meta?: object[]
-  link?: object[]
-  style?: object[]
-  script?: object[]
-  noscript?: object[]
+  htmlAttrs?: Record<string, unknown>
+  bodyAttrs?: Record<string, unknown>
+  base?: Record<string, unknown>
+  meta?: Record<string, unknown>[]
+  link?: Record<string, unknown>[]
+  style?: Record<string, unknown>[]
+  script?: Record<string, unknown>[]
+  noscript?: Record<string, unknown>[]
 }
 
 export class RouteEntry {
@@ -85,10 +107,15 @@ export class RouteEntry {
   }
 }
 
-function extractMetadata(id: string, outputFolder: string, rootOutputFolder: string, frontMatter?: any): Metadata {
+function extractMetadata(
+  id: string,
+  outputFolder: string,
+  rootOutputFolder: string,
+  frontMatter?: FrontmatterMetadata,
+): Metadata {
   const metadata: Metadata = {
     id,
-    isComponent: frontMatter.isComponent || false,
+    isComponent: frontMatter?.isComponent ?? false,
     permalink: getPermalink(id, outputFolder, rootOutputFolder, frontMatter ? frontMatter.permalink : undefined),
   }
   if (frontMatter) {
@@ -133,7 +160,7 @@ function extractMetadata(id: string, outputFolder: string, rootOutputFolder: str
 
     // date formatting
     if (frontMatter.date && frontMatter.dateFormat) {
-      const dateFormat: string = frontMatter.dateFormat
+      const dateFormat: string = frontMatter.dateFormat as string
       metadata.dateFormatted = moment(frontMatter.date).format(dateFormat)
     }
 

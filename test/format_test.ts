@@ -1,14 +1,17 @@
 import test from "ava"
-import * as path from "path"
 import * as prettier from "prettier"
 import format from "../src/format"
 
 // set up prettier config
-const prettierConfig = prettier.resolveConfig.sync(__filename)!
-prettierConfig.parser = "babylon"
+const prettierConfig = prettier.resolveConfig.sync(__filename)
+if (prettierConfig == null) {
+  throw `Failed to resolve prettier configuration for file: ${__filename}`
+}
+
+prettierConfig.parser = "babel"
 
 test("format html", t => {
-  const html = "    <div><p>This is a test</p> \t \n</div>"
+  const html = "<div><p>This is a test</p> \t \n</div>"
   const f = format.formatHtml(html, prettierConfig)
   t.deepEqual(f, `<div>\n  <p>This is a test</p>\n</div>\n`)
 })

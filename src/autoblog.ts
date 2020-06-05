@@ -14,7 +14,7 @@ export interface ParsedFile {
   html: string
 }
 
-export async function generate(config: cfg.AutoblogConfig) {
+export async function generate(config: cfg.AutoblogConfig): Promise<void> {
   // get list of .md files in input directory
   const dirInfo = await files.listDir(config.directory.inputFolder, ".md")
 
@@ -29,22 +29,24 @@ export async function generate(config: cfg.AutoblogConfig) {
   }
 
   const mdparser = new markdownit(config.markdownit)
-  const entries = dirInfo.files.map(it => FileInfo.of(it)).map(async it => {
-    const markdown = await readMarkdown(it.fullPath)
-    const parsedFile: ParsedFile = {
-      input: it,
-      output: it.changeTo({
-        extension: config.outputType,
-        replaceDir: {
-          startFrom: config.directory.inputFolder,
-          to: config.directory.outputFolder,
-        },
-      }),
-      markdown,
-      html: mdparser.render(markdown.rawContent),
-    }
-    return parsedFile
-  })
+  const entries = dirInfo.files
+    .map(it => FileInfo.of(it))
+    .map(async it => {
+      const markdown = await readMarkdown(it.fullPath)
+      const parsedFile: ParsedFile = {
+        input: it,
+        output: it.changeTo({
+          extension: config.outputType,
+          replaceDir: {
+            startFrom: config.directory.inputFolder,
+            to: config.directory.outputFolder,
+          },
+        }),
+        markdown,
+        html: mdparser.render(markdown.rawContent),
+      }
+      return parsedFile
+    })
 
   const parsedFiles = await Promise.all(entries)
   switch (config.outputType) {
@@ -55,7 +57,7 @@ export async function generate(config: cfg.AutoblogConfig) {
   }
 }
 
-async function generateVue(entries: ParsedFile[], config: cfg.AutoblogConfig) {
+async function generateVue(entries: ParsedFile[], config: cfg.AutoblogConfig): Promise<void> {
   const templater = await vuetemplater.NewTemplater(config)
 
   const vueEntries = entries.map(it => vue.parse(it, config.directory.outputFolder))
@@ -79,27 +81,30 @@ async function generateVue(entries: ParsedFile[], config: cfg.AutoblogConfig) {
     const prev = i - 1 >= 0 ? vueEntriesWithDates[i - 1].metadata : undefined
     const next = i + 1 < vueEntriesWithDates.length ? vueEntriesWithDates[i + 1].metadata : undefined
     const vueTemplate = templater.generate(curr, { prev, next })
-    files.writeFile(curr.output.fullPath, vueTemplate, files.UTF8).then(_ => {
+    files.writeFile(curr.output.fullPath, vueTemplate, { encoding: "utf8" }).then(() => {
       console.log(`Completed generating "${curr.output.fullPath}"`)
     })
   }
   for (const entry of vueEntriesWithoutDates) {
     const vueTemplate = templater.generate(entry)
-    files.writeFile(entry.output.fullPath, vueTemplate, files.UTF8).then(_ => {
+    files.writeFile(entry.output.fullPath, vueTemplate, { encoding: "utf8" }).then(() => {
       console.log(`Completed generating "${entry.output.fullPath}"`)
     })
   }
   for (const entry of vueEntriesComponents) {
     const vueTemplate = templater.generate(entry)
-    files.writeFile(entry.output.fullPath, vueTemplate, files.UTF8).then(_ => {
+    files.writeFile(entry.output.fullPath, vueTemplate, { encoding: "utf8" }).then(() => {
       console.log(`Completed generating "${entry.output.fullPath}"`)
     })
   }
 
   // get routes
   const routesPath = path.join(config.directory.outputFolder, vuetemplater.AUTO_ROUTES)
-  const routes = templater.generateRoutes(vueEntriesViews.map(it => it.routeEntry), config.vue.lazyRoutes)
-  files.writeFile(routesPath, routes, files.UTF8).then(_ => {
+  const routes = templater.generateRoutes(
+    vueEntriesViews.map(it => it.routeEntry),
+    config.vue.lazyRoutes,
+  )
+  files.writeFile(routesPath, routes, { encoding: "utf8" }).then(() => {
     console.log(`Completed generating "${routesPath}"`)
   })
 
@@ -111,13 +116,13 @@ async function generateVue(entries: ParsedFile[], config: cfg.AutoblogConfig) {
       .map(vuetemplater.extractPostEntries)
       .concat(vueEntriesWithDates.map(vuetemplater.extractPostEntries)),
   )
-  files.writeFile(postsPath, posts, files.UTF8).then(_ => {
+  files.writeFile(postsPath, posts, { encoding: "utf8" }).then(() => {
     console.log(`Completed generating "${postsPath}"`)
   })
 
   if (config.vue.prerender) {
     const prerenderRoutes = templater.generatePrerenderRoutes(vueEntriesViews.map(it => it.routeEntry))
-    files.writeFile(path.resolve(".", "prerender-routes.js"), prerenderRoutes, files.UTF8).then(_ => {
+    files.writeFile(path.resolve(".", "prerender-routes.js"), prerenderRoutes, { encoding: "utf8" }).then(() => {
       console.log(`Completed generating prerendered routes in "prerender-routes.js"`)
     })
   }
@@ -130,7 +135,7 @@ async function generateVue(entries: ParsedFile[], config: cfg.AutoblogConfig) {
 async function generateVueTypings(templater: vuetemplater.VueTemplater, config: cfg.AutoblogConfig) {
   const routeTypings = path.join(config.directory.outputFolder, vuetemplater.AUTO_ROUTES_TYPINGS)
   if (!(await files.exists(routeTypings))) {
-    files.writeFile(routeTypings, templater.generateRouteTypings(), files.UTF8).then(_ => {
+    files.writeFile(routeTypings, templater.generateRouteTypings(), { encoding: "utf8" }).then(() => {
       console.log(`Completed generating "${routeTypings}"`)
     })
   } else {
@@ -139,7 +144,7 @@ async function generateVueTypings(templater: vuetemplater.VueTemplater, config: 
 
   const postTypings = path.join(config.directory.outputFolder, vuetemplater.AUTO_POSTS_TYPINGS)
   if (!(await files.exists(postTypings))) {
-    files.writeFile(postTypings, templater.generatePostTypings(), files.UTF8).then(_ => {
+    files.writeFile(postTypings, templater.generatePostTypings(), { encoding: "utf8" }).then(() => {
       console.log(`Completed generating "${postTypings}"`)
     })
   } else {

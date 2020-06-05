@@ -1,11 +1,12 @@
 import * as yaml from "js-yaml"
 import * as files from "./files"
+import type { FrontmatterMetadata } from "./vue"
 
 const separator = "---"
 
 export interface MarkdownFile {
   rawContent: string
-  frontMatter?: any
+  frontMatter?: FrontmatterMetadata
 }
 
 export default async function readMarkdown(filePath: string): Promise<MarkdownFile> {
@@ -18,7 +19,7 @@ export default async function readMarkdown(filePath: string): Promise<MarkdownFi
     throw new Error(`${filePath} is not a file!`)
   }
 
-  const file = await files.readFile(filePath, files.UTF8)
+  const file: string = await files.readFile(filePath, { encoding: "utf8" })
   const length = file.length
 
   // parse front-matter start
@@ -31,7 +32,9 @@ export default async function readMarkdown(filePath: string): Promise<MarkdownFi
       firstIndex = 5
     } else {
       // tslint:disable-next-line:max-line-length
-      throw new Error(`Unexpected / invalid start of front-matter detected in ${filePath}. Make sure the front-matter starts with '---' followed by a new-line!`)
+      throw new Error(
+        `Unexpected / invalid start of front-matter detected in ${filePath}. Make sure the front-matter starts with '---' followed by a new-line!`,
+      )
     }
 
     // parse front-matter end
@@ -45,7 +48,9 @@ export default async function readMarkdown(filePath: string): Promise<MarkdownFi
           nextIndex = i + 5
         } else {
           // tslint:disable-next-line:max-line-length
-          throw new Error(`Unexpected / invalid end of front-matter detected in ${filePath}. Make sure the front-matter ends with '---' followed by a new line!`)
+          throw new Error(
+            `Unexpected / invalid end of front-matter detected in ${filePath}. Make sure the front-matter ends with '---' followed by a new line!`,
+          )
         }
 
         const frontMatterContent = file.substring(firstIndex, i)

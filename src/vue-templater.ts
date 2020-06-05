@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import * as handlebars from "handlebars"
 import * as path from "path"
 import { inspect } from "util"
 import { AutoblogConfig } from "./config"
 import * as files from "./files"
 import format from "./format"
-import { Metadata, ParsedVueFile, PostEntry, RouteEntry } from "./vue"
+import type { Metadata, ParsedVueFile, PostEntry, RouteEntry } from "./vue"
 
 export const VUE_TEMPLATE = "template.vue"
 export const VUE_SCRIPT = "script.vue"
@@ -54,7 +55,7 @@ export class VueTemplater {
     this.postTypings = postTypings
   }
 
-  public generate(entry: ParsedVueFile, options?: any): string {
+  public generate(entry: ParsedVueFile, options?: unknown): string {
     const prevnext = options as PrevNext
     const template = this.generateTemplate(entry, prevnext)
     const script = this.generateScript(entry)
@@ -63,7 +64,7 @@ export class VueTemplater {
   }
 
   public generateRoutes(routes: RouteEntry[], lazyRoute: boolean): string {
-    const imports = routes.map(it => lazyRoute ? it.getLazyImport() : it.getImport()).join("\n")
+    const imports = routes.map(it => (lazyRoute ? it.getLazyImport() : it.getImport())).join("\n")
     const list = routes.map(it => it.toString()).join(",\n")
     return format.formatScript(compileTemplate(this.routes, { imports, list }), this.config.prettierConfig)
   }
@@ -151,16 +152,16 @@ export class VueTemplater {
 export async function NewTemplater(config: AutoblogConfig): Promise<VueTemplater> {
   const rootPath = path.resolve(__dirname, "templates", "vue")
 
-  const template = await files.readFile(path.resolve(rootPath, VUE_TEMPLATE + HANDLEBARS_EXT), files.UTF8)
-  const script = await files.readFile(path.resolve(rootPath, VUE_SCRIPT + HANDLEBARS_EXT), files.UTF8)
-  const routes = await files.readFile(path.resolve(rootPath, AUTO_ROUTES + HANDLEBARS_EXT), files.UTF8)
-  const posts = await files.readFile(path.resolve(rootPath, AUTO_POSTS + HANDLEBARS_EXT), files.UTF8)
+  const template = await files.readFile(path.resolve(rootPath, VUE_TEMPLATE + HANDLEBARS_EXT), { encoding: "utf8" })
+  const script = await files.readFile(path.resolve(rootPath, VUE_SCRIPT + HANDLEBARS_EXT), { encoding: "utf8" })
+  const routes = await files.readFile(path.resolve(rootPath, AUTO_ROUTES + HANDLEBARS_EXT), { encoding: "utf8" })
+  const posts = await files.readFile(path.resolve(rootPath, AUTO_POSTS + HANDLEBARS_EXT), { encoding: "utf8" })
 
   const layouts = await loadLayouts(config.directory.inputFolder)
 
   if (config.typescript) {
-    const routeTypings = await files.readFile(path.resolve(rootPath, AUTO_ROUTES_TYPINGS), files.UTF8)
-    const postTypings = await files.readFile(path.resolve(rootPath, AUTO_POSTS_TYPINGS), files.UTF8)
+    const routeTypings = await files.readFile(path.resolve(rootPath, AUTO_ROUTES_TYPINGS), { encoding: "utf8" })
+    const postTypings = await files.readFile(path.resolve(rootPath, AUTO_POSTS_TYPINGS), { encoding: "utf8" })
     return new VueTemplater(config, template, script, routes, posts, layouts, routeTypings, postTypings)
   }
   return new VueTemplater(config, template, script, routes, posts, layouts)
@@ -183,14 +184,14 @@ async function loadLayouts(inputFolder: string): Promise<Layout> {
   }
 
   for (const layoutName of layoutFiles) {
-    const content = await files.readFile(path.join(layoutsFolder, layoutName), files.UTF8)
+    const content = await files.readFile(path.join(layoutsFolder, layoutName), { encoding: "utf8" })
     const name = format.pascalToKebab(layoutName.substring(0, layoutName.indexOf(".")))
     layouts[name] = content
   }
   return layouts
 }
 
-function compileTemplate(content: string, context: any): string {
+function compileTemplate(content: string, context: unknown): string {
   return handlebars.compile(content)(context)
 }
 

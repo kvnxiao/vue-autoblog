@@ -9,7 +9,6 @@ export const exists = promisify(fs.exists)
 export const readDir = promisify(fs.readdir)
 export const readFile = promisify(fs.readFile)
 export const writeFile = promisify(fs.writeFile)
-export const UTF8 = { encoding: "utf8" }
 
 interface DirectoryInfo {
   directories: string[]
@@ -22,21 +21,23 @@ interface DirectoryInfo {
  * @param dir the directory to create, including parent folders
  * @param mode permission mode, defaults to 777 if not provided
  */
-export async function mkdirp(dir: string, mode = 0o777) {
+export async function mkdirp(dir: string, mode = 0o777): Promise<void> {
   try {
     await mkdir(dir, mode)
   } catch (err) {
     switch (err.code) {
-      case ENOENT:
+      case ENOENT: {
         await mkdirp(path.dirname(dir), mode)
         await mkdirp(dir, mode)
         break
-      default:
+      }
+      default: {
         const stats = await stat(dir)
         if (!stats.isDirectory()) {
           throw err
         }
         break
+      }
     }
   }
 }

@@ -1,6 +1,7 @@
 import * as path from "path"
 import * as prettier from "prettier"
 import * as files from "./files"
+import MarkdownIt = require("markdown-it")
 
 const outputTypes = {
   html: true,
@@ -19,7 +20,7 @@ interface DirectoryOptions {
 }
 
 export class AutoblogConfig implements Config {
-  public readonly markdownit: markdownit.Options
+  public readonly markdownit: MarkdownIt.Options
   public readonly directory: DirectoryOptions
   public readonly defaultStyle?: string
   public readonly outputType: string
@@ -29,7 +30,7 @@ export class AutoblogConfig implements Config {
   public readonly prettierConfig: prettier.Options
 
   constructor(
-    markdownit: markdownit.Options,
+    markdownit: MarkdownIt.Options,
     directory: DirectoryOptions,
     defaultStyle: string | undefined,
     outputType: string,
@@ -49,7 +50,7 @@ export class AutoblogConfig implements Config {
 
 export interface Config {
   // markdown-it options
-  markdownit: markdownit.Options
+  markdownit: MarkdownIt.Options
 
   // directory to parse for generating files
   directory: DirectoryOptions
@@ -68,12 +69,12 @@ export interface Config {
 }
 
 export async function loadConfig(configPath: string): Promise<AutoblogConfig> {
-  const configFile = await files.readFile(configPath, files.UTF8)
+  const configFile = await files.readFile(configPath, { encoding: "utf8" })
   const json = JSON.parse(configFile)
 
   const prettierConfig = (await prettier.resolveConfig(path.resolve(configPath))) || {}
   if (!prettierConfig.parser) {
-    prettierConfig.parser = "babylon"
+    prettierConfig.parser = "babel"
   }
 
   const config: AutoblogConfig = new AutoblogConfig(
