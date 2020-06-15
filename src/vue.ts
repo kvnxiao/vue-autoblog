@@ -95,16 +95,20 @@ export class RouteEntry {
     this.file = file
   }
 
+  private getFile(): string {
+    return this.file.replace(/\\/g, "/")
+  }
+
   public toString(): string {
     return `{ path: "${this.path}", name: "${this.name}", component: ${this.componentName} }`
   }
 
   public getImport(): string {
-    return `import ${this.componentName} from "${this.file}";`
+    return `import ${this.componentName} from "${this.getFile()}";`
   }
 
   public getLazyImport(): string {
-    return `const ${this.componentName} = () => import(/* webpackChunkName: "${this.name}" */ "${this.file}");`
+    return `const ${this.componentName} = () => import(/* webpackChunkName: "${this.name}" */ "${this.getFile()}");`
   }
 }
 

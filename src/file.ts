@@ -24,14 +24,12 @@ export default class FileInfo {
   public readonly folder: string
   public readonly name: string
   public readonly extension: string
-  public readonly fileNameWithExt: string
 
   private constructor(fullPath: string, folder: string, name: string, extension: string) {
     this.fullPath = fullPath
     this.folder = folder
     this.name = name
     this.extension = extension
-    this.fileNameWithExt = folder + path.sep + name
   }
 
   public changeTo(options: FileInfoOptions): FileInfo {
