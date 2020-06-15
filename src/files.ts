@@ -98,8 +98,11 @@ export async function listDir(startPath: string, filter?: string): Promise<Direc
  * @param newParent the new parent prefix-path to use
  */
 export function replaceDir(dir: string, oldParent: string, newParent: string): string {
-  return dir.replace(
-    oldParent.endsWith(path.sep) ? oldParent.substring(0, oldParent.length - 1) : oldParent,
-    newParent.endsWith(path.sep) ? newParent.substring(0, newParent.length - 1) : newParent,
+  const npath = path.normalize(dir)
+  const nold = path.normalize(oldParent)
+  const nnew = path.normalize(newParent)
+  return npath.replace(
+    nold.endsWith(path.sep) ? nold.substring(0, nold.length - 1) : nold,
+    nnew.endsWith(path.sep) ? nnew.substring(0, nnew.length - 1) : nnew,
   )
 }

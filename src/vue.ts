@@ -95,20 +95,16 @@ export class RouteEntry {
     this.file = file
   }
 
-  private getFile(): string {
-    return this.file.replace(/\\/g, "/")
-  }
-
   public toString(): string {
     return `{ path: "${this.path}", name: "${this.name}", component: ${this.componentName} }`
   }
 
   public getImport(): string {
-    return `import ${this.componentName} from "${this.getFile()}";`
+    return `import ${this.componentName} from "${this.file}";`
   }
 
   public getLazyImport(): string {
-    return `const ${this.componentName} = () => import(/* webpackChunkName: "${this.name}" */ "${this.getFile()}");`
+    return `const ${this.componentName} = () => import(/* webpackChunkName: "${this.name}" */ "${this.file}");`
   }
 }
 
@@ -183,8 +179,10 @@ function getPermalink(
   rootOutputFolder: string,
   frontMatterPermalink?: string,
 ): string {
-  const pathPrefixLength = rootOutputFolder.endsWith("/") ? rootOutputFolder.length - 1 : rootOutputFolder.length
-  const permalink = frontMatterPermalink || (outputFolder + "/" + id).substring(pathPrefixLength)
+  const nout = path.normalize(outputFolder)
+  const nrootOut = path.normalize(rootOutputFolder)
+  const pathPrefixLength = nrootOut.endsWith(path.sep) ? nrootOut.length - 1 : nrootOut.length
+  const permalink = (frontMatterPermalink || (nout + path.sep + id).substring(pathPrefixLength)).replace(/\\/g, "/")
   return permalink
 }
 
@@ -197,10 +195,11 @@ export function parse(parsedFile: ParsedFile, rootOutputFolder: string): ParsedV
     parsedFile.markdown.frontMatter,
   )
 
-  const srcPrefix = path.join("src", "/")
-  const filePath = parsedFile.output.fullPath.startsWith(srcPrefix)
+  const srcPrefix = path.join("src", path.sep)
+  const filePath = (parsedFile.output.fullPath.startsWith(srcPrefix)
     ? `@/${parsedFile.output.fullPath.substring(srcPrefix.length)}`
     : parsedFile.output.fullPath
+  ).replace(/\\/g, "/")
 
   const routeEntry = new RouteEntry(metadata.permalink, metadata.id, componentName, filePath)
 
