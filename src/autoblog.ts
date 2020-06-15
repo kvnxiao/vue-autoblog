@@ -22,7 +22,7 @@ export async function generate(config: cfg.AutoblogConfig): Promise<void> {
   await files.mkdirp(config.directory.outputFolder)
 
   for (const dir of dirInfo.directories) {
-    if (!dir.endsWith("/layouts")) {
+    if (!dir.endsWith(path.join("/", "layouts"))) {
       const outDir = files.replaceDir(dir, config.directory.inputFolder, config.directory.outputFolder)
       await files.mkdirp(outDir)
     }

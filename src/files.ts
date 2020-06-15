@@ -65,7 +65,7 @@ export async function listDir(startPath: string, filter?: string): Promise<Direc
   const readdirr = async (root: string): Promise<DirectoryInfo> => {
     const items = await readDir(root)
     for (const item of items) {
-      const filePath = path.join(root, item).replace(/\\/g, "/")
+      const filePath = path.join(root, item)
       const stats = await stat(filePath)
       if (stats.isDirectory()) {
         directories.push(filePath)

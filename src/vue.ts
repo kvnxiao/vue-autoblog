@@ -1,4 +1,5 @@
 import * as moment from "moment"
+import * as path from "path"
 import { ParsedFile } from "./autoblog"
 import FileInfo from "./file"
 import format from "./format"
@@ -192,8 +193,9 @@ export function parse(parsedFile: ParsedFile, rootOutputFolder: string): ParsedV
     parsedFile.markdown.frontMatter,
   )
 
-  const filePath = parsedFile.output.fullPath.startsWith("src/")
-    ? `@/${parsedFile.output.fullPath.substring(4)}`
+  const srcPrefix = path.join("src", "/")
+  const filePath = parsedFile.output.fullPath.startsWith(srcPrefix)
+    ? `@/${parsedFile.output.fullPath.substring(srcPrefix.length)}`
     : parsedFile.output.fullPath
 
   const routeEntry = new RouteEntry(metadata.permalink, metadata.id, componentName, filePath)
